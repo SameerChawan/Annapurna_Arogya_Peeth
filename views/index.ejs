@@ -3,52 +3,844 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= lang === 'mr' ? 'अन्नपूर्णा आरोग्य पीठ' : 'Annapurna Arogya Peeth' %></title>
+    <title><%= lang === 'mr' ? 'अन्नपूर्णा आरोग्य पीठ — आईच्या हाताने, नैसर्गिक पीठ' : 'Annapurna Arogya Peeth — Homemade, Natural Flour' %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tiro+Devanagari+Marathi&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f9f7f3; }
-        header { background-color: #4a7729; color: white; padding: 20px; text-align: center; }
-        .lang-switch { position: absolute; top: 10px; right: 20px; }
-        .lang-switch a { color: white; text-decoration: none; margin: 0 5px; }
-        .container { padding: 20px; }
-        .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .product-card { background-color: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center; }
-        .contact { text-align: center; margin-top: 40px; }
-        footer { background-color: #333; color: white; text-align: center; padding: 10px; position: fixed; bottom: 0; width: 100%; }
+        :root {
+            --green-dark: #2d5a27;
+            --green-mid: #4a7c3f;
+            --green-light: #6fa35a;
+            --green-pale: #e8f5e1;
+            --gold: #c8a951;
+            --gold-light: #f5ecd4;
+            --cream: #fdfaf3;
+            --warm-brown: #5a3a22;
+            --text-dark: #2c2c2c;
+            --text-muted: #666;
+            --white: #ffffff;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.1);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--cream);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        .marathi { font-family: 'Tiro Devanagari Marathi', serif; }
+
+        /* TOP PROMO BAR */
+        .promo-bar {
+            background: linear-gradient(90deg, var(--green-dark), var(--green-mid));
+            color: var(--white);
+            text-align: center;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .promo-bar span { color: var(--gold); font-weight: 700; }
+
+        /* NAVIGATION */
+        nav {
+            background: var(--white);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--green-mid), var(--green-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+        .logo-text { line-height: 1.2; }
+        .logo-text .brand { font-size: 1.3rem; font-weight: 700; color: var(--green-dark); }
+        .logo-text .brand-en { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; }
+        .nav-links { display: flex; gap: 25px; align-items: center; }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: var(--green-mid); }
+        .lang-toggle {
+            display: flex;
+            background: var(--green-pale);
+            border-radius: 25px;
+            overflow: hidden;
+        }
+        .lang-toggle a {
+            padding: 6px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--green-dark);
+            transition: all 0.3s;
+        }
+        .lang-toggle a.active {
+            background: var(--green-mid);
+            color: var(--white);
+            border-radius: 25px;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 50%, var(--green-light) 100%);
+            color: var(--white);
+            padding: 80px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .hero-content {
+            max-width: 700px;
+            position: relative;
+            z-index: 2;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 6px 18px;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        .hero h1 .highlight { color: var(--gold); }
+        .hero p {
+            font-size: 1.15rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            max-width: 550px;
+            font-weight: 300;
+        }
+        .hero-cta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: var(--gold);
+            color: var(--warm-brown);
+        }
+        .btn-primary:hover {
+            background: #d4b55e;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(200,169,81,0.4);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--white);
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--white);
+        }
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+        .btn-whatsapp:hover {
+            background: #1da851;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37,211,102,0.4);
+        }
+
+        /* TRUST BADGES */
+        .trust-strip {
+            background: var(--white);
+            padding: 25px 40px;
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #eee;
+        }
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--green-dark);
+        }
+        .trust-icon {
+            width: 40px; height: 40px;
+            background: var(--green-pale);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        /* SECTION STYLING */
+        section { padding: 70px 40px; }
+        .section-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .section-header .overline {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--green-mid);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .section-header h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .section-header .underline {
+            width: 60px;
+            height: 3px;
+            background: var(--gold);
+            margin: 12px auto 0;
+            border-radius: 2px;
+        }
+
+        /* PRODUCT CARDS */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .product-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.4s;
+            position: relative;
+        }
+        .product-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+        }
+        .product-visual {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .product-visual .grain-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.15;
+            font-size: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .product-visual .product-emoji {
+            font-size: 70px;
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+        }
+        .product-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: var(--green-mid);
+            color: var(--white);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            z-index: 3;
+            letter-spacing: 0.5px;
+        }
+        .product-info {
+            padding: 20px;
+        }
+        .product-info h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+        .product-info .product-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .product-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .product-tags .tag {
+            background: var(--green-pale);
+            color: var(--green-dark);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .product-price {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--green-dark);
+        }
+        .product-price .weight {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            display: block;
+        }
+        .btn-add {
+            background: var(--green-mid);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-add:hover {
+            background: var(--green-dark);
+            transform: scale(1.05);
+        }
+
+        /* WHY CHOOSE US */
+        .why-section { background: var(--white); }
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .why-card {
+            text-align: center;
+            padding: 30px 20px;
+            border-radius: var(--radius);
+            background: var(--cream);
+            transition: all 0.3s;
+        }
+        .why-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .why-card .icon {
+            width: 70px; height: 70px;
+            background: linear-gradient(135deg, var(--green-pale), #d4edcc);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            margin: 0 auto 18px;
+        }
+        .why-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--green-dark);
+            margin-bottom: 8px;
+        }
+        .why-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* RECIPE / HOW TO USE */
+        .recipe-section {
+            background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+            color: var(--white);
+        }
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .recipe-card {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: var(--radius);
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+        .recipe-card:hover { background: rgba(255,255,255,0.15); }
+        .recipe-card .step-num {
+            width: 36px; height: 36px;
+            background: var(--gold);
+            color: var(--warm-brown);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+        .recipe-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .recipe-card p {
+            font-size: 0.85rem;
+            opacity: 0.85;
+            line-height: 1.6;
+        }
+
+        /* TESTIMONIALS */
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .testimonial-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+        }
+        .testimonial-card::before {
+            content: '"';
+            font-size: 60px;
+            color: var(--green-pale);
+            font-family: serif;
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            line-height: 1;
+        }
+        .testimonial-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+        .testimonial-card .author {
+            font-weight: 600;
+            color: var(--green-dark);
+            font-size: 0.9rem;
+        }
+        .testimonial-card .stars { color: var(--gold); font-size: 0.9rem; margin-bottom: 10px; }
+
+        /* SUBSCRIPTION BANNER */
+        .sub-banner {
+            background: var(--gold-light);
+            border: 2px solid var(--gold);
+            border-radius: var(--radius);
+            padding: 40px;
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .sub-banner h2 {
+            font-size: 1.8rem;
+            color: var(--warm-brown);
+            margin-bottom: 10px;
+        }
+        .sub-banner p {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        /* CONTACT / CTA */
+        .cta-section {
+            background: var(--cream);
+            text-align: center;
+        }
+        .cta-box {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .cta-box .phone {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--green-dark);
+            margin: 15px 0;
+        }
+        .cta-box .phone a { color: var(--green-dark); text-decoration: none; }
+
+        /* FOOTER */
+        footer {
+            background: var(--text-dark);
+            color: rgba(255,255,255,0.7);
+            padding: 40px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        footer .footer-brand {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 5px;
+        }
+        footer a { color: var(--gold); text-decoration: none; }
+
+        /* WHATSAPP FLOAT */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(37,211,102,0.4);
+            z-index: 999;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(37,211,102,0.5);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            nav { padding: 12px 20px; flex-wrap: wrap; gap: 10px; }
+            .nav-links { display: none; }
+            .hero { padding: 50px 20px; }
+            .hero h1 { font-size: 2rem; }
+            section { padding: 40px 20px; }
+            .trust-strip { gap: 20px; padding: 15px 20px; }
+            .trust-item { font-size: 0.75rem; }
+            .products-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="lang-switch">
-            <a href="/">EN</a> | <a href="/mr">MR</a>
-        </div>
-        <h1><%= lang === 'mr' ? 'अन्नपूर्णा आरोग्य पीठ' : 'Annapurna Arogya Peeth' %></h1>
-        <p><%= lang === 'mr' ? 'आईच्या हाताने बनवलेले शुद्ध आणि पौष्टिक पीठ' : 'Pure and Nutritious Flour, Made by a Mother\'s Hand' %></p>
-    </header>
+    <!-- PROMO BAR -->
+    <div class="promo-bar">
+        <% if (lang === 'mr') { %>
+            🌾 <span>१००% नैसर्गिक</span> — आईच्या हाताने बनवलेले, घरगुती पीठ | आता ऑर्डर करा!
+        <% } else { %>
+            🌾 <span>100% Natural</span> — Homemade flour crafted by a mother's hand | Order now!
+        <% } %>
+    </div>
 
-    <div class="container">
-        <h2><%= lang === 'mr' ? 'आमची उत्पादने' : 'Our Products' %></h2>
-        <div class="products">
-            <% products.products.forEach(product => { %>
-                <div class="product-card">
-                    <h3><%= product['name_' + lang] %></h3>
-                    <p><%= product['description_' + lang] %></p>
-                    <p><strong><%= lang === 'mr' ? 'किंमत' : 'Price' %>:</strong> ₹<%= product.price %> / <%= product.weight_kg %> kg</p>
-                </div>
-            <% }); %>
+    <!-- NAVIGATION -->
+    <nav>
+        <a href="<%= lang === 'mr' ? '/mr' : '/' %>" class="logo">
+            <div class="logo-icon">🌾</div>
+            <div class="logo-text">
+                <div class="brand marathi">अन्नपूर्णा आरोग्य पीठ</div>
+                <div class="brand-en">Annapurna Arogya Peeth</div>
+            </div>
+        </a>
+        <div class="nav-links">
+            <a href="#products"><%= lang === 'mr' ? 'उत्पादने' : 'Products' %></a>
+            <a href="#why"><%= lang === 'mr' ? 'आम्ही का?' : 'Why Us' %></a>
+            <a href="#recipes"><%= lang === 'mr' ? 'रेसिपी' : 'Recipes' %></a>
+            <a href="#contact"><%= lang === 'mr' ? 'संपर्क' : 'Contact' %></a>
         </div>
+        <div class="lang-toggle">
+            <a href="/" class="<%= lang === 'en' ? 'active' : '' %>">EN</a>
+            <a href="/mr" class="<%= lang === 'mr' ? 'active' : '' %>">मराठी</a>
+        </div>
+    </nav>
 
-        <div class="contact">
-            <h2><%= lang === 'mr' ? 'संपर्क साधा' : 'Contact Us' %></h2>
-            <p><%= lang === 'mr' ? 'ऑर्डर करण्यासाठी किंवा अधिक माहितीसाठी, आम्हाला व्हॉट्सॲप करा किंवा कॉल करा:' : 'To place an order or for more information, WhatsApp or call us at:' %></p>
-            <p><strong><%= lang === 'mr' ? 'फोन' : 'Phone' %>:</strong> 9869352049</p>
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">🏠 <%= lang === 'mr' ? 'मुंबईतील घरगुती उत्पादन' : 'Homemade in Mumbai' %></div>
+            <h1>
+                <% if (lang === 'mr') { %>
+                    आईच्या <span class="highlight">प्रेमाने</span><br>बनवलेले शुद्ध पीठ
+                <% } else { %>
+                    Pure Flour Made<br>with a <span class="highlight">Mother's Love</span>
+                <% } %>
+            </h1>
+            <p>
+                <% if (lang === 'mr') { %>
+                    मल्टी-मिलेट, मल्टीग्रेन पिठे — मधुमेह अनुकूल, उच्च फायबर, १००% नैसर्गिक. घावणे, डोसा आणि भाकरीसाठी परफेक्ट.
+                <% } else { %>
+                    Multi-millet, multigrain flours — diabetic-friendly, high-fiber, 100% natural. Perfect for Ghavane, Dosa & Bhakri.
+                <% } %>
+            </p>
+            <div class="hero-cta">
+                <a href="#products" class="btn btn-primary">
+                    🛒 <%= lang === 'mr' ? 'उत्पादने पहा' : 'Shop Now' %>
+                </a>
+                <a href="https://wa.me/919869352049?text=<%= encodeURIComponent(lang === 'mr' ? 'नमस्कार! मला अन्नपूर्णा आरोग्य पीठाबद्दल माहिती हवी आहे.' : 'Hello! I would like to know about Annapurna Arogya Peeth products.') %>" class="btn btn-whatsapp">
+                    💬 WhatsApp
+                </a>
+            </div>
         </div>
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="/market-research"><%= lang === 'mr' ? 'बाजार संशोधन अहवाल' : 'Market Research Report' %></a>
+    </section>
+
+    <!-- TRUST BADGES -->
+    <div class="trust-strip">
+        <div class="trust-item">
+            <div class="trust-icon">🛡️</div>
+            <span><%= lang === 'mr' ? 'FSSAI नोंदणीकृत' : 'FSSAI Registered' %></span>
+        </div>
+        <div class="trust-item">
+            <div class="trust-icon">🌿</div>
+            <span><%= lang === 'mr' ? '१००% नैसर्गिक' : '100% Natural' %></span>
+        </div>
+        <div class="trust-item">
+            <div class="trust-icon">📉</div>
+            <span><%= lang === 'mr' ? 'कमी Glycemic Index' : 'Low Glycemic Index' %></span>
+        </div>
+        <div class="trust-item">
+            <div class="trust-icon">💚</div>
+            <span><%= lang === 'mr' ? 'शाकाहारी' : '100% Vegetarian' %></span>
+        </div>
+        <div class="trust-item">
+            <div class="trust-icon">🏠</div>
+            <span><%= lang === 'mr' ? 'घरगुती उत्पादन' : 'Home Made' %></span>
         </div>
     </div>
 
+    <!-- PRODUCTS -->
+    <section id="products">
+        <div class="section-header">
+            <div class="overline"><%= lang === 'mr' ? 'आमची उत्पादने' : 'OUR PRODUCTS' %></div>
+            <h2><%= lang === 'mr' ? 'प्रत्येक दाण्यात पोषण, प्रत्येक पिठात प्रेम' : 'Nutrition in Every Grain, Love in Every Flour' %></h2>
+            <div class="underline"></div>
+        </div>
+        <div class="products-grid">
+            <% const emojis = ['💓', '🌾', '💪', '🦴', '🌾', '⚡', '🥘']; %>
+            <% const bgColors = ['#fce4ec', '#e8f5e9', '#fff3e0', '#e3f2fd', '#f3e5f5', '#fff8e1', '#e0f2f1']; %>
+            <% products.products.forEach((product, i) => { %>
+                <div class="product-card">
+                    <div class="product-visual" style="background: <%= bgColors[i] %>;">
+                        <div class="grain-bg">🌾</div>
+                        <span class="product-emoji"><%= emojis[i] %></span>
+                        <span class="product-badge"><%= product['badge_' + lang] %></span>
+                    </div>
+                    <div class="product-info">
+                        <h3 class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= product['name_' + lang] %></h3>
+                        <p class="product-desc <%= lang === 'mr' ? 'marathi' : '' %>"><%= product['description_' + lang] %></p>
+                        <div class="product-tags">
+                            <% const tags = lang === 'mr' ? product.tags_mr : product.tags; %>
+                            <% if (tags) { tags.forEach(tag => { %>
+                                <span class="tag"><%= tag %></span>
+                            <% }); } %>
+                        </div>
+                        <div class="product-footer">
+                            <div class="product-price">
+                                ₹<%= product.price %>
+                                <span class="weight"><%= product.weight_kg %> Kg</span>
+                            </div>
+                            <a href="https://wa.me/919869352049?text=<%= encodeURIComponent((lang === 'mr' ? 'मला ' : 'I want to order: ') + product['name_' + lang] + ' (₹' + product.price + '/kg)') %>" class="btn-add">
+                                <%= lang === 'mr' ? 'ऑर्डर करा' : 'Order Now' %>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </section>
+
+    <!-- WHY CHOOSE US -->
+    <section id="why" class="why-section">
+        <div class="section-header">
+            <div class="overline"><%= lang === 'mr' ? 'आम्ही का निवडावे' : 'WHY CHOOSE US' %></div>
+            <h2><%= lang === 'mr' ? 'आईचा हात, गिरणीची गुणवत्ता' : "A Mother's Touch, Mill Quality" %></h2>
+            <div class="underline"></div>
+        </div>
+        <div class="why-grid">
+            <div class="why-card">
+                <div class="icon">🏠</div>
+                <h3><%= lang === 'mr' ? 'घरगुती ताजगी' : 'Homemade Freshness' %></h3>
+                <p><%= lang === 'mr' ? 'प्रत्येक पीठ ताज्या साहित्यापासून तयार केले जाते. स्टोर-खरेदी पिठांप्रमाणे महिन्यांसाठी शेल्फवर नाही.' : 'Every flour is made from fresh ingredients. Not sitting on a store shelf for months like mass-produced brands.' %></p>
+            </div>
+            <div class="why-card">
+                <div class="icon">🔬</div>
+                <h3><%= lang === 'mr' ? 'कमी GI, उच्च फायबर' : 'Low GI, High Fiber' %></h3>
+                <p><%= lang === 'mr' ? 'मधुमेहींसाठी आदर्श. रक्तातील साखर हळूहळू वाढते, ज्यामुळे ऊर्जा दिवसभर टिकते.' : 'Ideal for diabetics. Blood sugar rises slowly, keeping you energized throughout the day.' %></p>
+            </div>
+            <div class="why-card">
+                <div class="icon">🌾</div>
+                <h3><%= lang === 'mr' ? '७ वेगवेगळी पिठे' : '7 Unique Blends' %></h3>
+                <p><%= lang === 'mr' ? 'ज्वारी, बाजरी, नाचणी, बार्ली, मूग डाळ — प्रत्येकासाठी काहीतरी खास.' : 'Jowar, Bajra, Nachani, Barley, Moong Dal — something special for everyone.' %></p>
+            </div>
+            <div class="why-card">
+                <div class="icon">💸</div>
+                <h3><%= lang === 'mr' ? 'परवडीची किंमत' : 'Affordable Pricing' %></h3>
+                <p><%= lang === 'mr' ? '₹180/किलो — प्रीमियम गुणवत्ता, योग्य किंमतीत. मोठ्या ब्रँडच्या तिप्पट किंमत नाही.' : '₹180/kg — premium quality at honest prices. Not 3x markup like big brands.' %></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- RECIPES / HOW TO USE -->
+    <section id="recipes" class="recipe-section">
+        <div class="section-header">
+            <div class="overline" style="color: var(--gold);"><%= lang === 'mr' ? 'झटपट रेसिपी' : 'QUICK RECIPES' %></div>
+            <h2 style="color: white;"><%= lang === 'mr' ? '५ मिनिटांत तयार करा' : 'Ready in 5 Minutes' %></h2>
+            <div class="underline"></div>
+        </div>
+        <div class="recipe-grid">
+            <div class="recipe-card">
+                <div class="step-num">१</div>
+                <h3 class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'घावणे (Dosa)' : 'Ghavane (Dosa)' %></h3>
+                <p class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'पीठ + पाणी + मीठ — फेरवून तव्यावर ओता. फराळासारखे सॉफ्ट घावणे तयार! कोणतेही आंबवणे नाही.' : 'Flour + Water + Salt — mix, pour on tava. Soft ghavane ready! No fermentation needed.' %></p>
+            </div>
+            <div class="recipe-card">
+                <div class="step-num">२</div>
+                <h3 class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'डोसा' : 'Crispy Dosa' %></h3>
+                <p class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'पीठ + दही + पाणी — १० मिनिटे ठेवा. तव्यावर कुरकुरीत डोसा भाजा. मुलांचा आवडता नाश्ता!' : 'Flour + Curd + Water — rest 10 mins. Crispy dosa on tava. Kids love it!' %></p>
+            </div>
+            <div class="recipe-card">
+                <div class="step-num">३</div>
+                <h3 class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'भाकरी' : 'Healthy Bhakri' %></h3>
+                <p class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'पीठ + गरम पाणी — मळून गोळे करा. हाताने थोपटून तव्यावर शिजवा. पारंपारिक स्वाद!' : 'Flour + hot water — knead, pat by hand, cook on tava. Traditional taste!' %></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section>
+        <div class="section-header">
+            <div class="overline"><%= lang === 'mr' ? 'ग्राहकांचे मत' : 'WHAT CUSTOMERS SAY' %></div>
+            <h2><%= lang === 'mr' ? 'विश्वासाचे प्रमाणपत्र' : 'Seal of Trust' %></h2>
+            <div class="underline"></div>
+        </div>
+        <div class="testimonial-grid">
+            <div class="testimonial-card">
+                <div class="stars">⭐⭐⭐⭐⭐</div>
+                <p class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'माझ्या आजोबांना मधुमेह आहे. हे डायबेटिक आटा वापरल्यापासून त्यांची साखर नियंत्रणात आहे. घावणे खूप चविष्ट बनतात!' : 'My grandfather is diabetic. Since using this flour, his sugar is under control. The ghavane taste amazing!' %></p>
+                <div class="author"><%= lang === 'mr' ? '— प्रिया, काळाचौकी' : '— Priya, Kalachowki' %></div>
+            </div>
+            <div class="testimonial-card">
+                <div class="stars">⭐⭐⭐⭐⭐</div>
+                <p class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'नाचणी डोसा पीठ अप्रतिम आहे! मुलांना खूप आवडते. आणि सकाळी लवकर तयार होते — ऑफिससाठी परफेक्ट.' : 'The Nachani dosa flour is incredible! Kids love it. And it\'s ready in minutes — perfect for office mornings.' %></p>
+                <div class="author"><%= lang === 'mr' ? '— राजेश, अभ्युदय नगर' : '— Rajesh, Abhuday Nagar' %></div>
+            </div>
+            <div class="testimonial-card">
+                <div class="stars">⭐⭐⭐⭐⭐</div>
+                <p class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'आईच्या हाताने बनवलेले पीठ — बाजारातील कोणत्याही ब्रँडपेक्षा चांगले. शुद्ध, ताजे आणि पौष्टिक. मी दरमहा ऑर्डर करतो.' : 'Flour made by a mother — better than any brand in the market. Pure, fresh, nutritious. I order monthly.' %></p>
+                <div class="author"><%= lang === 'mr' ? '— स्नेहा, दादर' : '— Sneha, Dadar' %></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SUBSCRIPTION BANNER -->
+    <section>
+        <div class="sub-banner">
+            <h2 class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? '📦 मासिक सबस्क्रिप्शन' : '📦 Monthly Subscription' %></h2>
+            <p class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'दर महिन्याच्या १ तारखेला ५ किलो पीठ घरी डिलिव्हरी — सेव्ह करा, सोडू नका!' : '5 Kg flour delivered to your door on the 1st of every month — save more, never run out!' %></p>
+            <a href="https://wa.me/919869352049?text=<%= encodeURIComponent(lang === 'mr' ? 'मला मासिक सबस्क्रिप्शनबद्दल माहिती हवी आहे.' : 'I want to know about the monthly subscription.') %>" class="btn btn-primary">
+                📞 <%= lang === 'mr' ? 'सबस्क्रिप्शनसाठी संपर्क करा' : 'Subscribe Now' %>
+            </a>
+        </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="cta-section">
+        <div class="section-header">
+            <div class="overline"><%= lang === 'mr' ? 'संपर्क साधा' : 'GET IN TOUCH' %></div>
+            <h2><%= lang === 'mr' ? 'आजच ऑर्डर करा' : 'Place Your Order Today' %></h2>
+            <div class="underline"></div>
+        </div>
+        <div class="cta-box">
+            <p class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'व्हॉट्सॲपवर ऑर्डर करा किंवा फोन करा. मुंबईतील अभ्युदय नगर, काळाचौकी परिसरात मोफत डिलिव्हरी!' : 'Order on WhatsApp or call us. Free delivery in Abhuday Nagar, Kalachowki area, Mumbai!' %></p>
+            <div class="phone">
+                <a href="tel:9869352049">📞 9869352049</a>
+            </div>
+            <a href="https://wa.me/919869352049" class="btn btn-whatsapp" style="font-size: 1.1rem; padding: 16px 40px;">
+                💬 <%= lang === 'mr' ? 'व्हॉट्सॲपवर ऑर्डर करा' : 'Order on WhatsApp' %>
+            </a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
     <footer>
-        <p>&copy; <%= new Date().getFullYear() %> <%= lang === 'mr' ? 'अन्नपूर्णा आरोग्य पीठ' : 'Annapurna Arogya Peeth' %>. All Rights Reserved.</p>
+        <div class="footer-brand marathi">अन्नपूर्णा आरोग्य पीठ</div>
+        <p>Annapurna Arogya Peeth</p>
+        <p style="margin-top: 10px;">B/120, Vighnaharta Building, G D Ambekar Marg, Kalachowki, Mumbai - 400033</p>
+        <p style="margin-top: 15px;">
+            <a href="https://github.com/SameerChawan/Annapurna_Business_Plan"><%= lang === 'mr' ? 'व्यवसाय योजना' : 'Business Plan' %></a>
+            &nbsp;|&nbsp;
+            <a href="/market-research"><%= lang === 'mr' ? 'बाजार संशोधन' : 'Market Research' %></a>
+        </p>
+        <p style="margin-top: 15px; font-size: 0.75rem; opacity: 0.6;">© 2026 Annapurna Arogya Peeth. All rights reserved.</p>
     </footer>
+
+    <!-- WHATSAPP FLOAT -->
+    <a href="https://wa.me/919869352049" class="whatsapp-float" title="<%= lang === 'mr' ? 'व्हॉट्सॲपवर संपर्क करा' : 'Chat on WhatsApp' %>">
+        💬
+    </a>
 </body>
 </html>

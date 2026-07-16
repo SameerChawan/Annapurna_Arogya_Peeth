@@ -4,64 +4,99 @@
       "id": "diabetic-atta",
       "name_en": "Diabetic Atta",
       "name_mr": "मधुमेह पीठ",
-      "description_en": "A specialized blend with a low glycemic index, perfect for managing blood sugar levels.",
-      "description_mr": "रक्तातील साखरेची पातळी व्यवस्थापित करण्यासाठी कमी ग्लायसेमिक इंडेक्स असलेले विशेष मिश्रण.",
+      "description_en": "Specially crafted low-GI blend for diabetics. Enjoy rotis, bhakri & dosa without blood sugar spikes.",
+      "description_mr": "मधुमेहींसाठी विशेष कमी GI मिश्रण. रक्तातील साखर न वाढता भाकरी, घावणे आणि डोसा आनंदाने खावा.",
       "price": 180,
-      "weight_kg": 1
+      "weight_kg": 1,
+      "badge_en": "Diabetic Friendly",
+      "badge_mr": "मधुमेह अनुकूल",
+      "tags": ["Low GI", "High Fiber", "Sugar Free"],
+      "tags_mr": ["कमी GI", "उच्च फायबर", "साखरमुक्त"],
+      "icon": "fa-heartbeat"
     },
     {
       "id": "barley-dosa-atta",
       "name_en": "Barley Dosa Atta",
       "name_mr": "बार्ली डोसा पीठ",
-      "description_en": "High-fiber barley-based flour for crispy and healthy dosas.",
-      "description_mr": "कुरकुरीत आणि आरोग्यदायी डोशांसाठी उच्च फायबर असलेले बार्ली-आधारित पीठ.",
+      "description_en": "High-fiber barley flour for crispy, golden dosas. A powerhouse of nutrition in every bite.",
+      "description_mr": "कुरकुरीत, सोनेरी डोशांसाठी उच्च फायबर बार्ली पीठ. प्रत्येक टोकात पोषणाचा खजिना.",
       "price": 180,
-      "weight_kg": 1
+      "weight_kg": 1,
+      "badge_en": "Heart Healthy",
+      "badge_mr": "हृदयासाठी चांगले",
+      "tags": ["High Fiber", "Rich in Manganese", "Low GI"],
+      "tags_mr": ["उच्च फायबर", "मँगेनीज समृद्ध", "कमी GI"],
+      "icon": "fa-seedling"
     },
     {
       "id": "moong-dal-dosa-atta",
       "name_en": "Moong Dal Dosa Atta",
       "name_mr": "मूग डाळ डोसा पीठ",
-      "description_en": "Protein-rich moong dal blend for a nutritious start to your day.",
-      "description_mr": "तुमच्या दिवसाची पौष्टिक सुरुवात करण्यासाठी प्रथिनेयुक्त मूग डाळीचे मिश्रण.",
+      "description_en": "Protein-packed moong dal blend for soft, nutritious dosas. Start your day with pure energy.",
+      "description_mr": "प्रथिनेने भरलेले मूग डाळ मिश्रण. दररोज सकाळी शुद्ध ऊर्जेने भरा.",
       "price": 180,
-      "weight_kg": 1
+      "weight_kg": 1,
+      "badge_en": "High Protein",
+      "badge_mr": "उच्च प्रथिने",
+      "tags": ["High Protein", "Easy Digest", "Gluten Free"],
+      "tags_mr": ["उच्च प्रथिने", "सहज पचन", "ग्लूटन मुक्त"],
+      "icon": "fa-dumbbell"
     },
     {
       "id": "nachani-dosa-atta",
-      "name_en": "Nachani Dosa Atta",
+      "name_en": "Nachani (Ragi) Dosa Atta",
       "name_mr": "नाचणी डोसा पीठ",
-      "description_en": "Nutrient-dense finger millet (ragi) flour, packed with calcium and minerals.",
-      "description_mr": "कॅल्शियम आणि खनिजांनी परिपूर्ण पौष्टिक नाचणीचे पीठ.",
+      "description_en": "Calcium-rich finger millet (ragi) flour. Stronger bones, better health, naturally.",
+      "description_mr": "कॅल्शियमयुक्त नाचणी पीठ. नैसर्गिकरित्या मजबूत हाडे, उत्तम आरोग्य.",
       "price": 180,
-      "weight_kg": 1
+      "weight_kg": 1,
+      "badge_en": "Calcium Rich",
+      "badge_mr": "कॅल्शियम समृद्ध",
+      "tags": ["Calcium Rich", "Iron Rich", "Gluten Free"],
+      "tags_mr": ["कॅल्शियम समृद्ध", "लोह समृद्ध", "ग्लूटन मुक्त"],
+      "icon": "fa-bone"
     },
     {
       "id": "jwari-dosa-atta",
-      "name_en": "Jwari Dosa Atta",
+      "name_en": "Jwari (Jowar) Dosa Atta",
       "name_mr": "ज्वारी डोसा पीठ",
-      "description_en": "Classic sorghum flour for traditional bhakri and dosas.",
-      "description_mr": "पारंपारिक भाकरी आणि डोशांसाठी उत्कृष्ट ज्वारीचे पीठ.",
+      "description_en": "The king of millets. Classic sorghum flour for traditional bhakri and dosas, just like grandma made.",
+      "description_mr": "बाजरींचा राजा. आजीसारखी पारंपारिक भाकरी आणि डोसा — अक्षरशः घरगुती.",
       "price": 180,
-      "weight_kg": 1
+      "weight_kg": 1,
+      "badge_en": "Traditional Recipe",
+      "badge_mr": "पारंपारिक",
+      "tags": ["Gluten Free", "Iron Rich", "Fiber Rich"],
+      "tags_mr": ["ग्लूटन मुक्त", "लोह समृद्ध", "फायबर समृद्ध"],
+      "icon": "fa-wheat-awn"
     },
     {
       "id": "bajri-dosa-atta",
-      "name_en": "Bajri Dosa Atta",
+      "name_en": "Bajri (Bajra) Dosa Atta",
       "name_mr": "बाजरी डोसा पीठ",
-      "description_en": "Pearl millet flour, rich in iron and other essential minerals.",
-      "description_mr": "लोह आणि इतर आवश्यक खनिजांनी समृद्ध बाजरीचे पीठ.",
+      "description_en": "Pearl millet power. Loaded with iron and essential minerals for an energy-packed morning.",
+      "description_mr": "बाजरीची शक्ती. लोह आणि आवश्यक खनिजांनी भरलेले — ऊर्जावान सकाळीसाठी.",
       "price": 180,
-      "weight_kg": 1
+      "weight_kg": 1,
+      "badge_en": "Energy Booster",
+      "badge_mr": "ऊर्जावर्धक",
+      "tags": ["Iron Rich", "Energy Boost", "Gluten Free"],
+      "tags_mr": ["लोह समृद्ध", "ऊर्जावर्धक", "ग्लूटन मुक्त"],
+      "icon": "fa-bolt"
     },
     {
       "id": "mixed-dal-dosa-atta",
       "name_en": "Mixed Dal Dosa Atta",
       "name_mr": "मिक्स डाळ डोसा पीठ",
-      "description_en": "A balanced protein source from a blend of various lentils.",
-      "description_mr": "विविध डाळींच्या मिश्रणातून संतुलित प्रथिने स्रोत.",
+      "description_en": "A symphony of lentils. Multiple dals blended for a complete protein profile in every dosa.",
+      "description_mr": "डाळींची सिम्फनी. प्रत्येक डोसात संपूर्ण प्रथिने — अनेक डाळींचे मिश्रण.",
       "price": 180,
-      "weight_kg": 1
+      "weight_kg": 1,
+      "badge_en": "Complete Protein",
+      "badge_mr": "संपूर्ण प्रथिने",
+      "tags": ["Complete Protein", "High Fiber", "Energy Rich"],
+      "tags_mr": ["संपूर्ण प्रथिने", "उच्च फायबर", "ऊर्जायुक्त"],
+      "icon": "fa-plate-wheat"
     }
   ]
 }
