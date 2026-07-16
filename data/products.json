@@ -1,0 +1,67 @@
+{
+  "products": [
+    {
+      "id": "diabetic-atta",
+      "name_en": "Diabetic Atta",
+      "name_mr": "मधुमेह पीठ",
+      "description_en": "A specialized blend with a low glycemic index, perfect for managing blood sugar levels.",
+      "description_mr": "रक्तातील साखरेची पातळी व्यवस्थापित करण्यासाठी कमी ग्लायसेमिक इंडेक्स असलेले विशेष मिश्रण.",
+      "price": 180,
+      "weight_kg": 1
+    },
+    {
+      "id": "barley-dosa-atta",
+      "name_en": "Barley Dosa Atta",
+      "name_mr": "बार्ली डोसा पीठ",
+      "description_en": "High-fiber barley-based flour for crispy and healthy dosas.",
+      "description_mr": "कुरकुरीत आणि आरोग्यदायी डोशांसाठी उच्च फायबर असलेले बार्ली-आधारित पीठ.",
+      "price": 180,
+      "weight_kg": 1
+    },
+    {
+      "id": "moong-dal-dosa-atta",
+      "name_en": "Moong Dal Dosa Atta",
+      "name_mr": "मूग डाळ डोसा पीठ",
+      "description_en": "Protein-rich moong dal blend for a nutritious start to your day.",
+      "description_mr": "तुमच्या दिवसाची पौष्टिक सुरुवात करण्यासाठी प्रथिनेयुक्त मूग डाळीचे मिश्रण.",
+      "price": 180,
+      "weight_kg": 1
+    },
+    {
+      "id": "nachani-dosa-atta",
+      "name_en": "Nachani Dosa Atta",
+      "name_mr": "नाचणी डोसा पीठ",
+      "description_en": "Nutrient-dense finger millet (ragi) flour, packed with calcium and minerals.",
+      "description_mr": "कॅल्शियम आणि खनिजांनी परिपूर्ण पौष्टिक नाचणीचे पीठ.",
+      "price": 180,
+      "weight_kg": 1
+    },
+    {
+      "id": "jwari-dosa-atta",
+      "name_en": "Jwari Dosa Atta",
+      "name_mr": "ज्वारी डोसा पीठ",
+      "description_en": "Classic sorghum flour for traditional bhakri and dosas.",
+      "description_mr": "पारंपारिक भाकरी आणि डोशांसाठी उत्कृष्ट ज्वारीचे पीठ.",
+      "price": 180,
+      "weight_kg": 1
+    },
+    {
+      "id": "bajri-dosa-atta",
+      "name_en": "Bajri Dosa Atta",
+      "name_mr": "बाजरी डोसा पीठ",
+      "description_en": "Pearl millet flour, rich in iron and other essential minerals.",
+      "description_mr": "लोह आणि इतर आवश्यक खनिजांनी समृद्ध बाजरीचे पीठ.",
+      "price": 180,
+      "weight_kg": 1
+    },
+    {
+      "id": "mixed-dal-dosa-atta",
+      "name_en": "Mixed Dal Dosa Atta",
+      "name_mr": "मिक्स डाळ डोसा पीठ",
+      "description_en": "A balanced protein source from a blend of various lentils.",
+      "description_mr": "विविध डाळींच्या मिश्रणातून संतुलित प्रथिने स्रोत.",
+      "price": 180,
+      "weight_kg": 1
+    }
+  ]
+}

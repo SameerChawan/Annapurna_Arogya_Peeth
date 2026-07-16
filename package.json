@@ -1,0 +1,13 @@
+{
+  "name": "annapurna-arogya-peeth",
+  "version": "1.0.0",
+  "description": "अन्नपूर्णा आरोग्य पीठ - शुद्ध मल्टी-ग्रेन आटा",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.9"
+  }
+}

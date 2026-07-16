@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= lang === 'mr' ? 'अन्नपूर्णा आरोग्य पीठ' : 'Annapurna Arogya Peeth' %></title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f9f7f3; }
+        header { background-color: #4a7729; color: white; padding: 20px; text-align: center; }
+        .lang-switch { position: absolute; top: 10px; right: 20px; }
+        .lang-switch a { color: white; text-decoration: none; margin: 0 5px; }
+        .container { padding: 20px; }
+        .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .product-card { background-color: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center; }
+        .contact { text-align: center; margin-top: 40px; }
+        footer { background-color: #333; color: white; text-align: center; padding: 10px; position: fixed; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="lang-switch">
+            <a href="/">EN</a> | <a href="/mr">MR</a>
+        </div>
+        <h1><%= lang === 'mr' ? 'अन्नपूर्णा आरोग्य पीठ' : 'Annapurna Arogya Peeth' %></h1>
+        <p><%= lang === 'mr' ? 'आईच्या हाताने बनवलेले शुद्ध आणि पौष्टिक पीठ' : 'Pure and Nutritious Flour, Made by a Mother\'s Hand' %></p>
+    </header>
+
+    <div class="container">
+        <h2><%= lang === 'mr' ? 'आमची उत्पादने' : 'Our Products' %></h2>
+        <div class="products">
+            <% products.products.forEach(product => { %>
+                <div class="product-card">
+                    <h3><%= product['name_' + lang] %></h3>
+                    <p><%= product['description_' + lang] %></p>
+                    <p><strong><%= lang === 'mr' ? 'किंमत' : 'Price' %>:</strong> ₹<%= product.price %> / <%= product.weight_kg %> kg</p>
+                </div>
+            <% }); %>
+        </div>
+
+        <div class="contact">
+            <h2><%= lang === 'mr' ? 'संपर्क साधा' : 'Contact Us' %></h2>
+            <p><%= lang === 'mr' ? 'ऑर्डर करण्यासाठी किंवा अधिक माहितीसाठी, आम्हाला व्हॉट्सॲप करा किंवा कॉल करा:' : 'To place an order or for more information, WhatsApp or call us at:' %></p>
+            <p><strong><%= lang === 'mr' ? 'फोन' : 'Phone' %>:</strong> 9869352049</p>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="/market-research"><%= lang === 'mr' ? 'बाजार संशोधन अहवाल' : 'Market Research Report' %></a>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; <%= new Date().getFullYear() %> <%= lang === 'mr' ? 'अन्नपूर्णा आरोग्य पीठ' : 'Annapurna Arogya Peeth' %>. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>
