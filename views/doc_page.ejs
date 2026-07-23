@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Tiro+Devanagari+Marathi&display=swap" rel="stylesheet">
+    <style>
+        :root { --green-dark: #2d5a27; --green-mid: #4a7c3f; --gold: #c8a951; --cream: #fdfaf3; --text-dark: #2c2c2c; --text-muted: #666; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: var(--cream); color: var(--text-dark); line-height: 1.8; }
+        .marathi { font-family: 'Tiro Devanagari Marathi', serif; }
+        .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--green-mid); text-decoration: none; font-weight: 600; margin-bottom: 30px; font-size: 0.95rem; }
+        .back-link:hover { text-decoration: underline; }
+        h1 { font-size: 2rem; color: var(--green-dark); margin: 20px 0 12px; }
+        h2 { font-size: 1.5rem; color: var(--green-dark); margin: 36px 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--gold); }
+        h3 { font-size: 1.2rem; color: var(--green-mid); margin: 24px 0 10px; }
+        h4 { font-size: 1.05rem; color: var(--text-dark); margin: 18px 0 8px; }
+        p { margin-bottom: 14px; color: var(--text-muted); }
+        ul, ol { margin: 10px 0 20px 24px; }
+        li { margin-bottom: 8px; color: var(--text-muted); }
+        strong { color: var(--text-dark); }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        th, td { padding: 10px 14px; text-align: left; border: 1px solid #ddd; }
+        th { background: var(--green-pale, #e8f5e1); color: var(--green-dark); font-weight: 600; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        blockquote { border-left: 4px solid var(--gold); padding: 12px 20px; margin: 16px 0; background: #fff8e1; border-radius: 0 8px 8px 0; }
+        code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+        hr { border: none; border-top: 2px solid var(--gold); margin: 30px 0; }
+        .emoji { font-size: 1.1em; }
+        @media (max-width: 768px) {
+            .container { padding: 20px 16px; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.25rem; }
+            table { font-size: 0.8rem; }
+            th, td { padding: 6px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container marathi">
+        <a href="/mr" class="back-link">← मुख्य पृष्ठावर परा</a>
+        <%- content %>
+        <hr>
+        <p style="text-align:center; color: #999; font-size: 0.8rem;">
+            © 2026 अन्नपूर्णा आरोग्य पीठ — अभ्युदय नगर, काळाचौकी, मुंबई - 400033
+        </p>
+    </div>
+</body>
+</html>

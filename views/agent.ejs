@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent Dashboard — Annapurna Arogya Peeth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f0f2f5; color: #333; }
+
+    .topbar { background: linear-gradient(135deg, #1a237e, #283593); color: #fff; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+    .topbar h1 { font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+    .topbar .actions { display: flex; gap: 16px; align-items: center; }
+    .topbar a { color: #aed9ff; text-decoration: none; font-size: 0.9rem; }
+    .topbar a:hover { text-decoration: underline; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    .tabs { display: flex; gap: 4px; margin-bottom: 0; }
+    .tab { padding: 12px 24px; background: #fff; border: none; border-radius: 12px 12px 0 0; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #666; transition: all 0.2s; font-family: 'Poppins', sans-serif; }
+    .tab.active { background: #1a237e; color: #fff; }
+    .tab:hover:not(.active) { background: #e8ecf1; }
+
+    .panel { display: none; background: #fff; border-radius: 0 12px 12px 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .panel.active { display: block; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .panel-header h2 { font-size: 1.1rem; color: #1a237e; }
+
+    .btn { padding: 8px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; font-family: 'Poppins', sans-serif; transition: all 0.2s; }
+    .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
+    .btn-primary { background: #1a237e; color: #fff; }
+    .btn-primary:hover { background: #0d1559; }
+    .btn-success { background: #28a745; color: #fff; }
+    .btn-success:hover { background: #1e7e34; }
+    .btn-danger { background: #dc3545; color: #fff; }
+    .btn-danger:hover { background: #b02a37; }
+    .btn-outline { background: transparent; border: 2px solid #1a237e; color: #1a237e; }
+    .btn-outline:hover { background: #1a237e; color: #fff; }
+    .btn-warning { background: #ffc107; color: #333; }
+    .btn-warning:hover { background: #e0a800; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 0.85rem; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem; font-family: 'Poppins', sans-serif; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #1a237e; }
+    .form-group textarea { resize: vertical; min-height: 100px; }
+
+    .draft-card { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 16px; transition: box-shadow 0.2s; }
+    .draft-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .draft-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .draft-type { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .type-whatsapp_broadcast { background: #25d366; color: #fff; }
+    .type-instagram_caption { background: #e1306c; color: #fff; }
+    .type-free_sample { background: #ff9800; color: #fff; }
+    .type-order_reply { background: #2196f3; color: #fff; }
+    .type-other { background: #9e9e9e; color: #fff; }
+    .draft-time { font-size: 0.75rem; color: #888; }
+    .draft-content { white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6; color: #333; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #e8e8e8; margin-bottom: 12px; max-height: 300px; overflow-y: auto; }
+    .draft-actions { display: flex; gap: 8px; }
+
+    .brief-card { background: linear-gradient(135deg, #e8eaf6, #c5cae9); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .brief-card h3 { color: #1a237e; margin-bottom: 12px; }
+    .brief-stat { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 12px; }
+    .brief-stat .stat { background: #fff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .brief-stat .stat .number { font-size: 1.5rem; font-weight: 700; color: #1a237e; }
+    .brief-stat .stat .label { font-size: 0.75rem; color: #666; }
+
+    .toast { position: fixed; top: 20px; right: 20px; padding: 14px 24px; border-radius: 10px; color: #fff; font-weight: 600; font-size: 0.9rem; z-index: 2000; transform: translateX(120%); transition: transform 0.3s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: #28a745; }
+    .toast-error { background: #dc3545; }
+    .toast-info { background: #2196f3; }
+
+    .empty { text-align: center; padding: 48px; color: #aaa; }
+
+    .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; gap: 8px; text-align: center; }
+      .brief-stat { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <div class="topbar">
+    <h1>AI Agent Dashboard</h1>
+    <div class="actions">
+      <a href="/admin">Admin Panel</a>
+      <a href="/" target="_blank">View Website</a>
+      <a href="/admin/logout">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('brief', this)">Morning Brief</button>
+      <button class="tab" onclick="showTab('approvals', this)">Pending Approvals</button>
+      <button class="tab" onclick="showTab('marketing', this)">Marketing Draft</button>
+      <button class="tab" onclick="showTab('order', this)">Paste Message</button>
+    </div>
+
+    <!-- MORNING BRIEF -->
+    <div id="brief" class="panel active">
+      <div class="panel-header">
+        <h2>Morning Brief</h2>
+        <button class="btn btn-primary" onclick="loadBrief()">Refresh Brief</button>
+      </div>
+      <div id="briefContent">
+        <div class="empty">Click "Refresh Brief" to load today's summary.</div>
+      </div>
+    </div>
+
+    <!-- PENDING APPROVALS -->
+    <div id="approvals" class="panel">
+      <div class="panel-header">
+        <h2>Pending Approvals</h2>
+        <button class="btn btn-outline" onclick="loadDrafts()">Refresh</button>
+      </div>
+      <div id="draftsList">
+        <div class="empty">Loading drafts...</div>
+      </div>
+    </div>
+
+    <!-- MARKETING DRAFT -->
+    <div id="marketing" class="panel">
+      <div class="panel-header">
+        <h2>Generate Marketing Draft</h2>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Draft Type</label>
+          <select id="draftType">
+            <option value="whatsapp_broadcast">WhatsApp Broadcast</option>
+            <option value="instagram_caption">Instagram Caption</option>
+            <option value="free_sample">Free-Sample Announcement</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Topic / Context</label>
+          <input type="text" id="draftTopic" placeholder="e.g. New bajri atta launch, festive offer, health tip...">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="generateBtn" onclick="generateDraft()" style="margin-top:8px">Generate Draft</button>
+      <div id="marketingResult" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- PASTE MESSAGE -->
+    <div id="order" class="panel">
+      <div class="panel-header">
+        <h2>Parse Customer Message</h2>
+      </div>
+      <div class="form-group">
+        <label>Paste customer WhatsApp message</label>
+        <textarea id="rawMessage" rows="5" placeholder="e.g. bhaiya 2kg diabetic atta chahiye kal delivery kar do"></textarea>
+      </div>
+      <button class="btn btn-primary" id="parseBtn" onclick="parseMessage()">Parse & Create Order</button>
+      <div id="parseResult" style="margin-top: 20px;"></div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(name, el) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(name).classList.add('active');
+      if (el) el.classList.add('active');
+      else {
+        // Activate the matching tab button
+        document.querySelectorAll('.tab').forEach(t => {
+          if (t.textContent.trim().toLowerCase().includes(name === 'approvals' ? 'pending' : name)) t.classList.add('active');
+        });
+      }
+    }
+
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast toast-' + (type || 'success') + ' show';
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // MORNING BRIEF
+    async function loadBrief() {
+      const container = document.getElementById('briefContent');
+      container.innerHTML = '<div class="empty">Loading...</div>';
+      try {
+        const res = await fetch('/api/agents/brief');
+        const data = await res.json();
+        container.innerHTML = `
+          <div class="brief-card">
+            <h3>${data.date}</h3>
+            <div class="brief-stat">
+              <div class="stat">
+                <div class="number">${data.pending_orders.length}</div>
+                <div class="label">Pending Orders</div>
+              </div>
+              <div class="stat">
+                <div class="number">${data.subscriptions_due.length}</div>
+                <div class="label">Subs Due (7d)</div>
+              </div>
+              <div class="stat">
+                <div class="number">${data.pending_drafts.length}</div>
+                <div class="label">Drafts Waiting</div>
+              </div>
+              <div class="stat">
+                <div class="number">\u20B9${data.today_revenue.toLocaleString('en-IN')}</div>
+                <div class="label">Today's Revenue</div>
+              </div>
+            </div>
+          </div>
+          ${data.pending_orders.length > 0 ? `
+            <h3 style="margin:16px 0 8px;color:#1a237e">Pending Orders</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+              <thead><tr style="background:#f8f9fa"><th style="padding:8px;text-align:left">Customer</th><th>Phone</th><th>Total</th><th>Date</th></tr></thead>
+              <tbody>
+                ${data.pending_orders.map(o => `<tr style="border-bottom:1px solid #eee"><td style="padding:8px">${o.customer_name}</td><td>${o.phone}</td><td>\u20B9${o.total}</td><td>${new Date(o.order_date).toLocaleDateString('en-IN')}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          ` : ''}
+          ${data.subscriptions_due.length > 0 ? `
+            <h3 style="margin:16px 0 8px;color:#1a237e">Subscriptions Due (Next 7 Days)</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+              <thead><tr style="background:#f8f9fa"><th style="padding:8px;text-align:left">Customer</th><th>Product</th><th>Qty</th><th>Next Delivery</th></tr></thead>
+              <tbody>
+                ${data.subscriptions_due.map(s => `<tr style="border-bottom:1px solid #eee"><td style="padding:8px">${s.customer_name}</td><td>${s.product_id}</td><td>${s.quantity}kg</td><td>${s.next_delivery}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          ` : ''}
+        `;
+      } catch (err) {
+        container.innerHTML = '<div class="empty" style="color:#dc3545">Error loading brief</div>';
+      }
+    }
+
+    // PENDING APPROVALS
+    async function loadDrafts() {
+      const container = document.getElementById('draftsList');
+      container.innerHTML = '<div class="empty">Loading...</div>';
+      try {
+        const res = await fetch('/api/drafts?status=pending_approval');
+        const drafts = await res.json();
+        if (drafts.length === 0) {
+          container.innerHTML = '<div class="empty">No pending drafts. Generate a marketing draft or process an order to see drafts here.</div>';
+          return;
+        }
+        container.innerHTML = drafts.map(d => `
+          <div class="draft-card" id="draft-${d.id}">
+            <div class="draft-meta">
+              <span class="draft-type type-${d.type}">${d.type.replace(/_/g, ' ')}</span>
+              <span class="draft-time">${new Date(d.created_at).toLocaleString('en-IN')}</span>
+            </div>
+            <div class="draft-content" id="content-${d.id}">${escapeHtml(d.content)}</div>
+            <div class="draft-actions">
+              <button class="btn btn-success btn-sm" onclick="approveDraft('${d.id}')">Approve & Copy</button>
+              <button class="btn btn-warning btn-sm" onclick="editDraft('${d.id}')">Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="rejectDraft('${d.id}')">Reject</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<div class="empty" style="color:#dc3545">Error loading drafts</div>';
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+      }
+      // Fallback for HTTP
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return Promise.resolve(ok);
+    }
+
+    async function approveDraft(id) {
+      try {
+        const res = await fetch('/api/drafts/' + id + '/approve', { method: 'POST' });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Server error');
+        }
+        const draft = await res.json();
+        const copied = await copyToClipboard(draft.content);
+        const card = document.getElementById('draft-' + id);
+        if (card) card.remove();
+        if (copied) {
+          showToast('Approved & copied to clipboard!');
+        } else {
+          showToast('Approved! Could not auto-copy — use the "Copy" link to copy manually.');
+          // Show a fallback copy area
+          const div = document.getElementById('approvals');
+          const fallback = document.createElement('div');
+          fallback.className = 'draft-card';
+          fallback.innerHTML = '<strong style="color:#1a237e">Approved Draft (copy manually):</strong>' +
+            '<div class="draft-content">' + escapeHtml(draft.content) + '</div>' +
+            '<button class="btn btn-outline btn-sm" onclick="copyToClipboard(\'' + draft.content.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\').then(()=>showToast(\'Copied!\'))">Copy Again</button>';
+          div.insertBefore(fallback, div.querySelector('.draft-card') || div.firstChild);
+        }
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    }
+
+    async function editDraft(id) {
+      const contentEl = document.getElementById('content-' + id);
+      const currentContent = contentEl.textContent;
+      contentEl.innerHTML = '<textarea id="edit-' + id + '" style="width:100%;min-height:120px;padding:8px;border:1px solid #ddd;border-radius:8px;font-family:Poppins,sans-serif;font-size:0.9rem">' + escapeHtml(currentContent) + '</textarea>';
+      const actionsEl = contentEl.nextElementSibling;
+      actionsEl.innerHTML = '<button class="btn btn-primary btn-sm" onclick="saveEdit(\'' + id + '\')">Save</button> <button class="btn btn-outline btn-sm" onclick="loadDrafts()">Cancel</button>';
+    }
+
+    async function saveEdit(id) {
+      const textarea = document.getElementById('edit-' + id);
+      try {
+        await fetch('/api/drafts/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: textarea.value })
+        });
+        showToast('Draft updated');
+        loadDrafts();
+      } catch (err) {
+        showToast('Error saving edit', 'error');
+      }
+    }
+
+    async function rejectDraft(id) {
+      try {
+        await fetch('/api/drafts/' + id + '/reject', { method: 'POST' });
+        showToast('Draft rejected');
+        document.getElementById('draft-' + id).remove();
+      } catch (err) {
+        showToast('Error rejecting draft', 'error');
+      }
+    }
+
+    // MARKETING DRAFT
+    async function generateDraft() {
+      const type = document.getElementById('draftType').value;
+      const topic = document.getElementById('draftTopic').value.trim();
+      if (!topic) { showToast('Enter a topic', 'error'); return; }
+
+      const btn = document.getElementById('generateBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Generating...';
+
+      try {
+        const res = await fetch('/api/agents/marketing/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, topic })
+        });
+        const draft = await res.json();
+        document.getElementById('marketingResult').innerHTML = `
+          <div class="draft-card">
+            <div class="draft-meta">
+              <span class="draft-type type-${draft.type}">${draft.type.replace(/_/g, ' ')}</span>
+              <span class="draft-time">Just now</span>
+            </div>
+            <div class="draft-content">${escapeHtml(draft.content)}</div>
+            <div class="draft-actions">
+              <button class="btn btn-success btn-sm" onclick="approveDraft('${draft.id}')">Approve & Copy</button>
+              <button class="btn btn-outline btn-sm" onclick="showTab('approvals');loadDrafts();">View All Drafts</button>
+            </div>
+          </div>
+        `;
+        showToast('Draft generated!');
+      } catch (err) {
+        showToast('Error generating draft: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Generate Draft';
+      }
+    }
+
+    // PARSE MESSAGE
+    async function parseMessage() {
+      const message = document.getElementById('rawMessage').value.trim();
+      if (!message) { showToast('Paste a message first', 'error'); return; }
+
+      const btn = document.getElementById('parseBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Parsing...';
+
+      try {
+        const res = await fetch('/api/agents/order/parse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        const result = await res.json();
+        document.getElementById('parseResult').innerHTML = `
+          <div class="draft-card">
+            <h3 style="margin-bottom:12px">Parsed Result</h3>
+            <table style="width:100%;font-size:0.85rem">
+              <tr><td style="font-weight:600;padding:4px 8px">Name</td><td>${result.customer_name || '—'}</td></tr>
+              <tr><td style="font-weight:600;padding:4px 8px">Phone</td><td>${result.phone || '—'}</td></tr>
+              <tr><td style="font-weight:600;padding:4px 8px">Intent</td><td>${result.intent || '—'}</td></tr>
+              <tr><td style="font-weight:600;padding:4px 8px">Products</td><td>${(result.products || []).map(p => p.productId + ' x' + p.quantity).join(', ') || '—'}</td></tr>
+              <tr><td style="font-weight:600;padding:4px 8px">Notes</td><td>${result.notes || '—'}</td></tr>
+              ${result.order_created ? '<tr><td style="font-weight:600;padding:4px 8px">Order</td><td style="color:#28a745;font-weight:600">Created ✓ — reply draft pending approval</td></tr>' : ''}
+            </table>
+          </div>
+        `;
+        showToast(result.order_created ? 'Order created & reply drafted!' : 'Message parsed');
+      } catch (err) {
+        showToast('Error parsing message: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Parse & Create Order';
+      }
+    }
+
+    // ESC to close nothing (placeholder for future modals)
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {}
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Annapurna Arogya Peeth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f0f2f5; color: #333; }
+
+    /* TOPBAR */
+    .topbar { background: linear-gradient(135deg, #2d5a27, #4a7c3f); color: #fff; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+    .topbar h1 { font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+    .topbar .actions { display: flex; gap: 16px; align-items: center; }
+    .topbar a { color: #aed9ff; text-decoration: none; font-size: 0.9rem; }
+    .topbar a:hover { text-decoration: underline; }
+
+    /* CONTAINER */
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    /* STATS */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; transition: transform 0.2s; }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card .number { font-size: 2rem; font-weight: 700; color: #2d5a27; }
+    .stat-card .label { color: #888; font-size: 0.85rem; margin-top: 4px; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 4px; margin-bottom: 0; }
+    .tab { padding: 12px 28px; background: #fff; border: none; border-radius: 12px 12px 0 0; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #666; transition: all 0.2s; font-family: 'Poppins', sans-serif; }
+    .tab.active { background: #2d5a27; color: #fff; }
+    .tab:hover:not(.active) { background: #e8ecf1; }
+
+    /* PANEL */
+    .panel { display: none; background: #fff; border-radius: 0 12px 12px 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow-x: auto; }
+    .panel.active { display: block; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .panel-header h2 { font-size: 1.1rem; color: #2d5a27; }
+
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+    th { background: #f8f9fa; font-weight: 600; color: #555; position: sticky; top: 0; }
+    tr:hover { background: #f8f9fa; }
+
+    /* BADGES */
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-pending { background: #fff3cd; color: #856404; }
+    .badge-confirmed { background: #d1ecf1; color: #0c5460; }
+    .badge-delivered { background: #d4edda; color: #155724; }
+    .badge-cancelled { background: #f8d7da; color: #721c24; }
+    .badge-active { background: #d4edda; color: #155724; }
+    .badge-paused { background: #fff3cd; color: #856404; }
+
+    /* BUTTONS */
+    .btn { padding: 8px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; font-family: 'Poppins', sans-serif; transition: all 0.2s; }
+    .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
+    .btn-primary { background: #2d5a27; color: #fff; }
+    .btn-primary:hover { background: #1e3d1a; }
+    .btn-danger { background: #dc3545; color: #fff; }
+    .btn-danger:hover { background: #b02a37; }
+    .btn-success { background: #28a745; color: #fff; }
+    .btn-success:hover { background: #1e7e34; }
+    .btn-warning { background: #ffc107; color: #333; }
+    .btn-warning:hover { background: #e0a800; }
+    .btn-outline { background: transparent; border: 2px solid #2d5a27; color: #2d5a27; }
+    .btn-outline:hover { background: #2d5a27; color: #fff; }
+    .actions { display: flex; gap: 4px; flex-wrap: wrap; }
+
+    /* FORM */
+    select { padding: 6px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.85rem; font-family: 'Poppins', sans-serif; }
+    .product-name { font-weight: 600; }
+    .product-price { color: #2d5a27; font-weight: 700; }
+    .empty { text-align: center; padding: 48px; color: #aaa; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 40px; overflow-y: auto; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #fff; border-radius: 16px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; z-index: 1; border-radius: 16px 16px 0 0; }
+    .modal-header h3 { font-size: 1.1rem; color: #2d5a27; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; padding: 4px 8px; border-radius: 8px; }
+    .modal-close:hover { background: #f0f0f0; color: #333; }
+    .modal-body { padding: 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 12px; position: sticky; bottom: 0; background: #fff; border-radius: 0 0 16px 16px; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 0.8rem; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem; font-family: 'Poppins', sans-serif; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #2d5a27; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-section { font-weight: 700; color: #2d5a27; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #e8f5e1; font-size: 0.9rem; }
+
+    /* TOAST */
+    .toast { position: fixed; top: 20px; right: 20px; padding: 14px 24px; border-radius: 10px; color: #fff; font-weight: 600; font-size: 0.9rem; z-index: 2000; transform: translateX(120%); transition: transform 0.3s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: #28a745; }
+    .toast-error { background: #dc3545; }
+
+    /* ORDER DETAIL */
+    .order-items { font-size: 0.8rem; color: #555; }
+    .order-items li { margin-left: 16px; }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; gap: 8px; text-align: center; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .modal { margin: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <h1>Annapurna Arogya Peeth — Admin</h1>
+    <div class="actions">
+      <a href="/admin/agent" style="background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:8px;font-weight:600">AI Agent</a>
+      <a href="/business-plan" target="_blank">Business Plan</a>
+      <a href="/market-research" target="_blank">Market Research</a>
+      <a href="/" target="_blank">View Website</a>
+      <a href="/admin/logout">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="number"><%= products.length %></div>
+        <div class="label">Total Products</div>
+      </div>
+      <div class="stat-card">
+        <div class="number"><%= products.filter(p => p.active !== false).length %></div>
+        <div class="label">Active Products</div>
+      </div>
+      <div class="stat-card">
+        <div class="number"><%= orders.length %></div>
+        <div class="label">Total Orders</div>
+      </div>
+      <div class="stat-card">
+        <div class="number"><%= orders.filter(o => o.status === 'pending').length %></div>
+        <div class="label">Pending Orders</div>
+      </div>
+      <div class="stat-card">
+        <div class="number"><%= subscriptions.filter(s => s.status === 'active').length %></div>
+        <div class="label">Active Subscriptions</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">₹<%= (orders.reduce((sum, o) => sum + (o.total || 0), 0) + deliveries.reduce((sum, d) => sum + ((d.aap_subscriptions && d.aap_subscriptions.price) || 0), 0)).toLocaleString('en-IN') %></div>
+        <div class="label">Total Revenue (Orders + Subs)</div>
+      </div>
+      <div class="stat-card">
+        <div class="number"><%= deliveries.length %></div>
+        <div class="label">Sub Deliveries Made</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('products', this)">Products</button>
+      <button class="tab" onclick="showTab('orders', this)">Orders</button>
+      <button class="tab" onclick="showTab('subscriptions', this)">Subscriptions</button>
+      <button class="tab" onclick="showTab('customers', this)">Customers</button>
+    </div>
+
+    <!-- PRODUCTS PANEL -->
+    <div id="products" class="panel active">
+      <div class="panel-header">
+        <h2>Product Catalog</h2>
+        <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
+      </div>
+      <% if (products.length === 0) { %>
+        <div class="empty">No products yet. Click "Add Product" to create one.</div>
+      <% } else { %>
+        <table>
+          <thead>
+            <tr><th>Product</th><th>Category</th><th>Price/kg</th><th>Weight</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <% products.forEach(p => { %>
+              <tr>
+                <td>
+                  <span class="product-name"><%= p.emoji || '🌾' %> <%= p.name_en %></span><br>
+                  <small style="color:#888"><%= p.name_mr %></small>
+                </td>
+                <td><span style="text-transform:capitalize"><%= p.category || 'millet' %></span></td>
+                <td class="product-price">₹<%= p.price %></td>
+                <td><%= p.weight_kg || 1 %> kg</td>
+                <td><span class="badge badge-<%= p.active !== false ? 'active' : 'cancelled' %>"><%= p.active !== false ? 'Active' : 'Inactive' %></span></td>
+                <td class="actions">
+                  <button class="btn btn-sm btn-warning" onclick='editProduct(<%- JSON.stringify(p) %>)'>Edit</button>
+                  <button class="btn btn-sm btn-<%= p.active !== false ? 'outline' : 'success' %>" onclick="toggleProduct('<%= p.id %>', <%= p.active === false %>)"><%= p.active === false ? 'Enable' : 'Disable' %></button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteProduct('<%= p.id %>', '<%= p.name_en %>')">Delete</button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+    <!-- ORDERS PANEL -->
+    <div id="orders" class="panel">
+      <div class="panel-header">
+        <h2>Customer Orders</h2>
+      </div>
+      <% if (orders.length === 0) { %>
+        <div class="empty">No orders yet. Orders will appear here when customers place them.</div>
+      <% } else { %>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <% orders.slice().reverse().forEach(o => { %>
+              <tr>
+                <td><strong><%= o.id.slice(0,8) %></strong></td>
+                <td><%= o.customer_name %><% if (o.address) { %><br><small style="color:#888"><%= o.address %></small><% } %></td>
+                <td><a href="tel:<%= o.phone %>" style="color:#2d5a27"><%= o.phone %></a></td>
+                <td>
+                  <ul class="order-items">
+                    <% (o.items || []).forEach(item => { %>
+                      <li><%= item.productId %> x<%= item.quantity %> — ₹<%= item.price * item.quantity %></li>
+                    <% }) %>
+                  </ul>
+                </td>
+                <td class="product-price">₹<%= o.total %></td>
+                <td><%= new Date(o.order_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %></td>
+                <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
+                <td class="actions">
+                  <select onchange="updateOrderStatus('<%= o.id %>', this.value)">
+                    <option value="pending" <%= o.status==='pending'?'selected':'' %>>Pending</option>
+                    <option value="confirmed" <%= o.status==='confirmed'?'selected':'' %>>Confirmed</option>
+                    <option value="delivered" <%= o.status==='delivered'?'selected':'' %>>Delivered</option>
+                    <option value="cancelled" <%= o.status==='cancelled'?'selected':'' %>>Cancelled</option>
+                  </select>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+    <!-- SUBSCRIPTIONS PANEL -->
+    <div id="subscriptions" class="panel">
+      <div class="panel-header">
+        <h2>Active Subscriptions</h2>
+      </div>
+      <% if (subscriptions.length === 0) { %>
+        <div class="empty">No subscriptions yet. Subscriptions will appear here when customers subscribe.</div>
+      <% } else { %>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Customer</th><th>Phone</th><th>Product</th><th>Qty</th><th>Freq</th><th>Price</th><th>Next Delivery</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <% subscriptions.forEach(s => { %>
+              <tr>
+                <td><strong><%= s.id.slice(0,8) %></strong></td>
+                <td><%= s.customer_name %><% if (s.address) { %><br><small style="color:#888"><%= s.address %></small><% } %></td>
+                <td><a href="tel:<%= s.phone %>" style="color:#2d5a27"><%= s.phone %></a></td>
+                <td><%= s.product_id %></td>
+                <td><%= s.quantity %> kg</td>
+                <td><%= s.frequency %></td>
+                <td class="product-price">₹<%= s.price %></td>
+                <td>
+                  <span class="<%= new Date(s.next_delivery) <= new Date() ? 'badge badge-pending' : '' %>"><%= s.next_delivery %></span>
+                </td>
+                <td><span class="badge badge-<%= s.status %>"><%= s.status %></span></td>
+                <td class="actions" style="flex-wrap:wrap">
+                  <button class="btn btn-sm btn-success" onclick="markDelivered('<%= s.id %>', <%= s.quantity %>)">Deliver</button>
+                  <button class="btn btn-sm btn-outline" onclick="toggleDeliveries('<%= s.id %>', this)">History</button>
+                  <select onchange="updateSubStatus('<%= s.id %>', this.value)" style="font-size:0.75rem">
+                    <option value="active" <%= s.status==='active'?'selected':'' %>>Active</option>
+                    <option value="paused" <%= s.status==='paused'?'selected':'' %>>Paused</option>
+                    <option value="cancelled" <%= s.status==='cancelled'?'selected':'' %>>Cancelled</option>
+                  </select>
+                </td>
+              </tr>
+              <tr id="hist-<%= s.id %>" style="display:none">
+                <td colspan="10" style="padding:0">
+                  <div style="background:#f8f9fa;padding:12px 16px;border-top:1px solid #eee">
+                    <strong style="font-size:0.8rem">Delivery History</strong>
+                    <div id="hist-content-<%= s.id %>" style="font-size:0.8rem;color:#555;margin-top:4px">Loading...</div>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+    <!-- CUSTOMERS PANEL -->
+    <div id="customers" class="panel">
+      <div class="panel-header">
+        <h2>Customer Directory</h2>
+      </div>
+      <% if (customers.length === 0) { %>
+        <div class="empty">No customers yet. Customers are auto-created when orders or subscriptions are placed.</div>
+      <% } else { %>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Phone</th><th>Address</th><th>Notes</th><th>Joined</th></tr>
+          </thead>
+          <tbody>
+            <% customers.forEach(c => { %>
+              <tr>
+                <td><strong><%= c.name %></strong></td>
+                <td><a href="tel:<%= c.phone %>" style="color:#2d5a27"><%= c.phone %></a></td>
+                <td><%= c.address || '—' %></td>
+                <td><%= c.notes || '—' %></td>
+                <td><%= new Date(c.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- PRODUCT MODAL -->
+  <div id="productModal" class="modal-overlay" onclick="if(event.target===this)closeProductModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add New Product</h3>
+        <button class="modal-close" onclick="closeProductModal()">&times;</button>
+      </div>
+      <form id="productForm" onsubmit="saveProduct(event)">
+        <div class="modal-body">
+          <input type="hidden" id="pf_id" value="">
+
+          <div class="form-section">Basic Info</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Product Name (English) *</label>
+              <input type="text" id="pf_name_en" required>
+            </div>
+            <div class="form-group">
+              <label>Product Name (Marathi) *</label>
+              <input type="text" id="pf_name_mr" required>
+            </div>
+            <div class="form-group">
+              <label>Emoji Icon *</label>
+              <input type="text" id="pf_emoji" placeholder="e.g. 💓" maxlength="4" required>
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="pf_category">
+                <option value="millet">Millet</option>
+                <option value="dal">Dal</option>
+                <option value="specialty">Specialty</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-section">Descriptions</div>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Description (English)</label>
+              <textarea id="pf_desc_en" rows="2"></textarea>
+            </div>
+            <div class="form-group full">
+              <label>Description (Marathi)</label>
+              <textarea id="pf_desc_mr" rows="2"></textarea>
+            </div>
+          </div>
+
+          <div class="form-section">Pricing & Weight</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Price per kg (₹) *</label>
+              <input type="number" id="pf_price" min="1" required>
+            </div>
+            <div class="form-group">
+              <label>Weight (kg)</label>
+              <input type="number" id="pf_weight" min="0.1" step="0.1" value="1">
+            </div>
+          </div>
+
+          <div class="form-section">Badges & Tags</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Badge (English)</label>
+              <input type="text" id="pf_badge_en" placeholder="e.g. High Protein">
+            </div>
+            <div class="form-group">
+              <label>Badge (Marathi)</label>
+              <input type="text" id="pf_badge_mr" placeholder="e.g. उच्च प्रथिने">
+            </div>
+            <div class="form-group">
+              <label>Tags (English, comma-separated)</label>
+              <input type="text" id="pf_tags" placeholder="e.g. Low GI, High Fiber">
+            </div>
+            <div class="form-group">
+              <label>Tags (Marathi, comma-separated)</label>
+              <input type="text" id="pf_tags_mr" placeholder="e.g. कमी GI, उच्च फायबर">
+            </div>
+          </div>
+
+          <div class="form-section">Photo</div>
+          <div class="form-group">
+            <label>Image URL (leave empty to use emoji placeholder)</label>
+            <input type="text" id="pf_image" placeholder="https://example.com/product.jpg">
+          </div>
+
+          <div class="form-section">Ingredients</div>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Ingredients (English)</label>
+              <textarea id="pf_ing_en" rows="2" placeholder="e.g. Whole wheat flour, barley flour, fenugreek powder..."></textarea>
+            </div>
+            <div class="form-group full">
+              <label>Ingredients (Marathi)</label>
+              <textarea id="pf_ing_mr" rows="2" placeholder="e.g. कडधान्य पीठ, बार्ली पीठ, मेथी पूड..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-section">Nutrition (per 100g)</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Calories</label>
+              <input type="number" id="pf_cal" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label>Protein (g)</label>
+              <input type="number" id="pf_prot" min="0" step="0.1" value="0">
+            </div>
+            <div class="form-group">
+              <label>Fiber (g)</label>
+              <input type="number" id="pf_fiber" min="0" step="0.1" value="0">
+            </div>
+            <div class="form-group">
+              <label>Carbs (g)</label>
+              <input type="number" id="pf_carbs" min="0" step="0.1" value="0">
+            </div>
+            <div class="form-group">
+              <label>Fat (g)</label>
+              <input type="number" id="pf_fat" min="0" step="0.1" value="0">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="pf_submit">Add Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // TAB NAVIGATION
+    function showTab(name, el) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(name).classList.add('active');
+      if (el) el.classList.add('active');
+    }
+
+    // TOAST
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast toast-' + (type || 'success') + ' show';
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // PRODUCT MODAL
+    function openProductModal(product) {
+      const m = document.getElementById('productModal');
+      const title = document.getElementById('modalTitle');
+      const submit = document.getElementById('pf_submit');
+
+      if (product) {
+        title.textContent = 'Edit Product';
+        submit.textContent = 'Save Changes';
+        document.getElementById('pf_id').value = product.id;
+        document.getElementById('pf_name_en').value = product.name_en || '';
+        document.getElementById('pf_name_mr').value = product.name_mr || '';
+        document.getElementById('pf_emoji').value = product.emoji || '';
+        document.getElementById('pf_category').value = product.category || 'millet';
+        document.getElementById('pf_desc_en').value = product.description_en || '';
+        document.getElementById('pf_desc_mr').value = product.description_mr || '';
+        document.getElementById('pf_price').value = product.price || '';
+        document.getElementById('pf_weight').value = product.weight_kg || 1;
+        document.getElementById('pf_badge_en').value = product.badge_en || '';
+        document.getElementById('pf_badge_mr').value = product.badge_mr || '';
+        document.getElementById('pf_tags').value = (product.tags || []).join(', ');
+        document.getElementById('pf_tags_mr').value = (product.tags_mr || []).join(', ');
+        document.getElementById('pf_image').value = product.image || '';
+        document.getElementById('pf_ing_en').value = product.ingredients_en || '';
+        document.getElementById('pf_ing_mr').value = product.ingredients_mr || '';
+        const n = product.nutrition || {};
+        document.getElementById('pf_cal').value = n.calories || 0;
+        document.getElementById('pf_prot').value = n.protein || 0;
+        document.getElementById('pf_fiber').value = n.fiber || 0;
+        document.getElementById('pf_carbs').value = n.carbs || 0;
+        document.getElementById('pf_fat').value = n.fat || 0;
+      } else {
+        title.textContent = 'Add New Product';
+        submit.textContent = 'Add Product';
+        document.getElementById('productForm').reset();
+        document.getElementById('pf_id').value = '';
+        document.getElementById('pf_weight').value = '1';
+      }
+      m.classList.add('show');
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.remove('show');
+    }
+
+    function editProduct(product) {
+      openProductModal(product);
+    }
+
+    async function saveProduct(e) {
+      e.preventDefault();
+      const id = document.getElementById('pf_id').value;
+      const data = {
+        name_en: document.getElementById('pf_name_en').value,
+        name_mr: document.getElementById('pf_name_mr').value,
+        emoji: document.getElementById('pf_emoji').value,
+        category: document.getElementById('pf_category').value,
+        description_en: document.getElementById('pf_desc_en').value,
+        description_mr: document.getElementById('pf_desc_mr').value,
+        price: parseInt(document.getElementById('pf_price').value),
+        weight_kg: parseFloat(document.getElementById('pf_weight').value),
+        badge_en: document.getElementById('pf_badge_en').value,
+        badge_mr: document.getElementById('pf_badge_mr').value,
+        tags: document.getElementById('pf_tags').value.split(',').map(s => s.trim()).filter(Boolean),
+        tags_mr: document.getElementById('pf_tags_mr').value.split(',').map(s => s.trim()).filter(Boolean),
+        image: document.getElementById('pf_image').value,
+        ingredients_en: document.getElementById('pf_ing_en').value,
+        ingredients_mr: document.getElementById('pf_ing_mr').value,
+        nutrition: {
+          calories: parseInt(document.getElementById('pf_cal').value) || 0,
+          protein: parseFloat(document.getElementById('pf_prot').value) || 0,
+          fiber: parseFloat(document.getElementById('pf_fiber').value) || 0,
+          carbs: parseFloat(document.getElementById('pf_carbs').value) || 0,
+          fat: parseFloat(document.getElementById('pf_fat').value) || 0
+        },
+        active: true
+      };
+
+      try {
+        const url = id ? '/api/products/' + id : '/api/products';
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) {
+          showToast(id ? 'Product updated!' : 'Product added!');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Error saving product', 'error');
+        }
+      } catch (err) {
+        showToast('Network error', 'error');
+      }
+    }
+
+    async function toggleProduct(id, currentlyInactive) {
+      await fetch('/api/products/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: currentlyInactive })
+      });
+      showToast(currentlyInactive ? 'Product enabled' : 'Product disabled');
+      setTimeout(() => location.reload(), 800);
+    }
+
+    async function deleteProduct(id, name) {
+      if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+      try {
+        const res = await fetch('/api/products/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('Product deleted');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showToast('Error deleting product', 'error');
+        }
+      } catch (err) {
+        showToast('Network error', 'error');
+      }
+    }
+
+    // ORDER STATUS
+    async function updateOrderStatus(id, status) {
+      await fetch('/api/orders/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      showToast('Order status updated');
+    }
+
+    // SUBSCRIPTION STATUS
+    async function updateSubStatus(id, status) {
+      await fetch('/api/subscriptions/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      showToast('Subscription status updated');
+    }
+
+    // MARK DELIVERY
+    async function markDelivered(subId, defaultQty) {
+      const qty = prompt('Delivered quantity (kg):', defaultQty);
+      if (qty === null) return;
+      try {
+        const res = await fetch('/api/subscriptions/' + subId + '/deliver', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity: parseInt(qty) || defaultQty })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Delivery recorded! Next delivery: ' + data.next_delivery);
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showToast(data.error || 'Error recording delivery', 'error');
+        }
+      } catch (err) {
+        showToast('Network error', 'error');
+      }
+    }
+
+    // TOGGLE DELIVERY HISTORY
+    async function toggleDeliveries(subId, btn) {
+      const row = document.getElementById('hist-' + subId);
+      if (row.style.display === 'none') {
+        row.style.display = '';
+        btn.textContent = 'Hide';
+        const content = document.getElementById('hist-content-' + subId);
+        try {
+          const res = await fetch('/api/subscriptions/' + subId + '/deliveries');
+          const deliveries = await res.json();
+          if (deliveries.length === 0) {
+            content.innerHTML = '<em>No deliveries recorded yet.</em>';
+          } else {
+            content.innerHTML = '<table style="width:100%;margin-top:4px"><thead><tr style="background:#e8ecf1"><th style="padding:6px;font-size:0.75rem">Date</th><th style="padding:6px;font-size:0.75rem">Qty</th><th style="padding:6px;font-size:0.75rem">Notes</th></tr></thead><tbody>' +
+              deliveries.map(d => '<tr><td style="padding:6px">' + new Date(d.delivered_date).toLocaleDateString('en-IN') + '</td><td style="padding:6px">' + d.quantity + ' kg</td><td style="padding:6px">' + (d.notes || '—') + '</td></tr>').join('') +
+              '</tbody></table>';
+          }
+        } catch (err) {
+          content.innerHTML = '<em style="color:#dc3545">Error loading history</em>';
+        }
+      } else {
+        row.style.display = 'none';
+        btn.textContent = 'History';
+      }
+    }
+
+    // ESC key closes modal
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeProductModal();
+    });
+  </script>
+</body>
+</html>

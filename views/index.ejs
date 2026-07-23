@@ -67,14 +67,11 @@
         }
         .logo-icon {
             width: 48px; height: 48px;
-            background: linear-gradient(135deg, var(--green-mid), var(--green-light));
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
+            overflow: hidden;
+            flex-shrink: 0;
         }
+        .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
         .logo-text { line-height: 1.2; }
         .logo-text .brand { font-size: 1.3rem; font-weight: 700; color: var(--green-dark); }
         .logo-text .brand-en { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; }
@@ -106,25 +103,40 @@
             color: var(--white);
             border-radius: 25px;
         }
+        .lang-toggle .admin-secret {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            padding: 6px 10px;
+        }
+        .lang-toggle:hover .admin-secret {
+            opacity: 0.4;
+            pointer-events: auto;
+        }
+        .lang-toggle .admin-secret:hover {
+            opacity: 1;
+            background: var(--green-mid);
+            color: var(--white);
+            border-radius: 25px;
+        }
 
         /* HERO SECTION */
         .hero {
-            background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 50%, var(--green-light) 100%);
+            background: url('/hero-banner.png') center/cover no-repeat;
             color: var(--white);
             padding: 80px 40px;
             position: relative;
             overflow: hidden;
         }
-        .hero::before {
+        .hero::after {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-            border-radius: 50%;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(45,90,39,0.85) 0%, rgba(74,124,63,0.75) 50%, rgba(111,163,90,0.65) 100%);
+            z-index: 1;
         }
+        .hero-content { position: relative; z-index: 2; }
         .hero-content {
             max-width: 700px;
             position: relative;
@@ -601,7 +613,7 @@
     <!-- NAVIGATION -->
     <nav>
         <a href="<%= lang === 'mr' ? '/mr' : '/' %>" class="logo">
-            <div class="logo-icon">🌾</div>
+            <div class="logo-icon"><img src="/logo.png" alt="Annapurna Arogya Peeth Logo"></div>
             <div class="logo-text">
                 <div class="brand marathi">अन्नपूर्णा आरोग्य पीठ</div>
                 <div class="brand-en">Annapurna Arogya Peeth</div>
@@ -616,6 +628,7 @@
         <div class="lang-toggle">
             <a href="/" class="<%= lang === 'en' ? 'active' : '' %>">EN</a>
             <a href="/mr" class="<%= lang === 'mr' ? 'active' : '' %>">मराठी</a>
+            <a href="/admin" class="admin-secret" title="Admin">⚙</a>
         </div>
     </nav>
 
@@ -682,7 +695,7 @@
         <div class="products-grid">
             <% const emojis = ['💓', '🌾', '💪', '🦴', '🌾', '⚡', '🥘']; %>
             <% const bgColors = ['#fce4ec', '#e8f5e9', '#fff3e0', '#e3f2fd', '#f3e5f5', '#fff8e1', '#e0f2f1']; %>
-            <% products.products.forEach((product, i) => { %>
+            <% products.forEach((product, i) => { %>
                 <div class="product-card">
                     <div class="product-visual" style="background: <%= bgColors[i] %>;">
                         <div class="grain-bg">🌾</div>
@@ -703,9 +716,9 @@
                                 ₹<%= product.price %>
                                 <span class="weight"><%= product.weight_kg %> Kg</span>
                             </div>
-                            <a href="https://wa.me/919869352049?text=<%= encodeURIComponent((lang === 'mr' ? 'मला ' : 'I want to order: ') + product['name_' + lang] + ' (₹' + product.price + '/kg)') %>" class="btn-add">
+                            <button onclick="openOrderModal('<%= product.id %>', '<%= product['name_' + lang] %>', <%= product.price %>)" class="btn-add">
                                 <%= lang === 'mr' ? 'ऑर्डर करा' : 'Order Now' %>
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -739,7 +752,7 @@
             <div class="why-card">
                 <div class="icon">💸</div>
                 <h3><%= lang === 'mr' ? 'परवडीची किंमत' : 'Affordable Pricing' %></h3>
-                <p><%= lang === 'mr' ? '₹180/किलो — प्रीमियम गुणवत्ता, योग्य किंमतीत. मोठ्या ब्रँडच्या तिप्पट किंमत नाही.' : '₹180/kg — premium quality at honest prices. Not 3x markup like big brands.' %></p>
+                <p><%= lang === 'mr' ? '₹200-275/किलो — प्रीमियम गुणवत्ता, योग्य किंमतीत. मोठ्या ब्रँडच्या तिप्पट किंमत नाही.' : '₹200-275/kg — premium quality at honest prices. Not 3x markup like big brands.' %></p>
             </div>
         </div>
     </section>
@@ -801,9 +814,9 @@
         <div class="sub-banner">
             <h2 class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? '📦 मासिक सबस्क्रिप्शन' : '📦 Monthly Subscription' %></h2>
             <p class="<%= lang === 'mr' ? 'marathi' : '' %>"><%= lang === 'mr' ? 'दर महिन्याच्या १ तारखेला ५ किलो पीठ घरी डिलिव्हरी — सेव्ह करा, सोडू नका!' : '5 Kg flour delivered to your door on the 1st of every month — save more, never run out!' %></p>
-            <a href="https://wa.me/919869352049?text=<%= encodeURIComponent(lang === 'mr' ? 'मला मासिक सबस्क्रिप्शनबद्दल माहिती हवी आहे.' : 'I want to know about the monthly subscription.') %>" class="btn btn-primary">
-                📞 <%= lang === 'mr' ? 'सबस्क्रिप्शनसाठी संपर्क करा' : 'Subscribe Now' %>
-            </a>
+            <button onclick="openSubscribeModal()" class="btn btn-primary">
+                📦 <%= lang === 'mr' ? 'सबस्क्रिप्शनसाठी संपर्क करा' : 'Subscribe Now' %>
+            </button>
         </div>
     </section>
 
@@ -830,11 +843,20 @@
         <div class="footer-brand marathi">अन्नपूर्णा आरोग्य पीठ</div>
         <p>Annapurna Arogya Peeth</p>
         <p style="margin-top: 10px;">B/120, Vighnaharta Building, G D Ambekar Marg, Kalachowki, Mumbai - 400033</p>
-        <p style="margin-top: 15px;">
-            <a href="https://github.com/SameerChawan/Annapurna_Business_Plan"><%= lang === 'mr' ? 'व्यवसाय योजना' : 'Business Plan' %></a>
-            &nbsp;|&nbsp;
-            <a href="/market-research"><%= lang === 'mr' ? 'बाजार संशोधन' : 'Market Research' %></a>
-        </p>
+        <div style="margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;">
+            <svg width="36" height="36" viewBox="0 0 100 100" style="flex-shrink: 0;">
+                <circle cx="50" cy="50" r="48" fill="#004d40" stroke="#004d40" stroke-width="2"/>
+                <text x="50" y="30" text-anchor="middle" fill="#ffd700" font-size="12" font-weight="bold" font-family="Arial,sans-serif">FSSAI</text>
+                <text x="50" y="48" text-anchor="middle" fill="#ffffff" font-size="8" font-family="Arial,sans-serif">FOOD SAFETY</text>
+                <text x="50" y="58" text-anchor="middle" fill="#ffffff" font-size="8" font-family="Arial,sans-serif">AND STANDARDS</text>
+                <text x="50" y="70" text-anchor="middle" fill="#ffffff" font-size="7" font-family="Arial,sans-serif">AUTHORITY OF INDIA</text>
+                <text x="50" y="84" text-anchor="middle" fill="#ffd700" font-size="6" font-family="Arial,sans-serif">www.fssai.gov.in</text>
+            </svg>
+            <div style="text-align: left; line-height: 1.4;">
+                <div style="font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.9);">FSSAI Licensed</div>
+                <div style="font-size: 0.9rem; font-weight: 700; color: var(--gold); letter-spacing: 1px;">Licence No: 21526003001001</div>
+            </div>
+        </div>
         <p style="margin-top: 15px; font-size: 0.75rem; opacity: 0.6;">© 2026 Annapurna Arogya Peeth. All rights reserved.</p>
     </footer>
 
@@ -842,5 +864,269 @@
     <a href="https://wa.me/919869352049" class="whatsapp-float" title="<%= lang === 'mr' ? 'व्हॉट्सॲपवर संपर्क करा' : 'Chat on WhatsApp' %>">
         💬
     </a>
+
+    <!-- ORDER MODAL -->
+    <div id="orderModal" class="modal-overlay" onclick="if(event.target===this)closeOrderModal()">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h3 id="orderModalTitle"><%= lang === 'mr' ? 'ऑर्डर करा' : 'Place Order' %></h3>
+          <button class="modal-x" onclick="closeOrderModal()">&times;</button>
+        </div>
+        <form id="orderForm" onsubmit="submitOrder(event)">
+          <div class="modal-body-inner">
+            <input type="hidden" id="om_productId" value="">
+            <div class="form-row">
+              <div class="form-field">
+                <label><%= lang === 'mr' ? 'नाव' : 'Full Name' %> *</label>
+                <input type="text" id="om_name" required placeholder="<%= lang === 'mr' ? 'तुमचे नाव' : 'Your full name' %>">
+              </div>
+              <div class="form-field">
+                <label><%= lang === 'mr' ? 'फोन' : 'Phone Number' %> *</label>
+                <input type="tel" id="om_phone" required placeholder="9869352049" pattern="[0-9]{10}">
+              </div>
+            </div>
+            <div class="form-field">
+              <label><%= lang === 'mr' ? 'पत्ता' : 'Delivery Address' %></label>
+              <input type="text" id="om_address" placeholder="<%= lang === 'mr' ? 'अभ्युदय नगर, काळाचौकी' : 'Abhyuday Nagar, Kalachowki' %>">
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label><%= lang === 'mr' ? 'उत्पादन' : 'Product' %> *</label>
+                <select id="om_product" required onchange="updateOrderPrice()">
+                  <% products.forEach(p => { %>
+                    <option value="<%= p.id %>" data-price="<%= p.price %>"><%= p['name_' + lang] %> — ₹<%= p.price %>/kg</option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="form-field">
+                <label><%= lang === 'mr' ? 'प्रमाण (किलो)' : 'Quantity (kg)' %> *</label>
+                <input type="number" id="om_qty" min="1" value="1" required onchange="updateOrderPrice()">
+              </div>
+            </div>
+            <div class="form-field">
+              <label><%= lang === 'mr' ? 'टोपणी' : 'Notes (optional)' %></label>
+              <textarea id="om_notes" rows="2" placeholder="<%= lang === 'mr' ? 'काही विशेष सांगायचे असल्यास' : 'Any special instructions' %>"></textarea>
+            </div>
+            <div class="order-total">
+              <%= lang === 'mr' ? 'एकूण' : 'Total' %>: <strong id="om_total">₹<%= products[0] ? products[0].price : 0 %></strong>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button type="button" class="btn-cancel" onclick="closeOrderModal()"><%= lang === 'mr' ? 'रद्द करा' : 'Cancel' %></button>
+            <button type="submit" class="btn-submit"><%= lang === 'mr' ? 'ऑर्डर पाठवा' : 'Place Order' %></button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- SUBSCRIPTION MODAL -->
+    <div id="subModal" class="modal-overlay" onclick="if(event.target===this)closeSubModal()">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h3><%= lang === 'mr' ? 'मासिक सबस्क्रिप्शन' : 'Monthly Subscription' %></h3>
+          <button class="modal-x" onclick="closeSubModal()">&times;</button>
+        </div>
+        <form id="subForm" onsubmit="submitSubscription(event)">
+          <div class="modal-body-inner">
+            <p style="background:#e8f5e1;padding:12px;border-radius:8px;margin-bottom:16px;font-size:0.85rem;">
+              <%= lang === 'mr' ? 'दर महिन्याच्या १ तारखेला तुमची पीठ घरी डिलिव्हर होतील. सेव्ह करा, कधीही सोडू शकता.' : 'Your flour delivered on the 1st of every month. Save more, cancel anytime.' %>
+            </p>
+            <div class="form-row">
+              <div class="form-field">
+                <label><%= lang === 'mr' ? 'नाव' : 'Full Name' %> *</label>
+                <input type="text" id="sm_name" required>
+              </div>
+              <div class="form-field">
+                <label><%= lang === 'mr' ? 'फोन' : 'Phone Number' %> *</label>
+                <input type="tel" id="sm_phone" required pattern="[0-9]{10}">
+              </div>
+            </div>
+            <div class="form-field">
+              <label><%= lang === 'mr' ? 'पत्ता' : 'Delivery Address' %></label>
+              <input type="text" id="sm_address">
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label><%= lang === 'mr' ? 'उत्पादन' : 'Product' %> *</label>
+                <select id="sm_product" required onchange="updateSubPrice()">
+                  <% products.forEach(p => { %>
+                    <option value="<%= p.id %>" data-price="<%= p.price %>"><%= p['name_' + lang] %> — ₹<%= p.price %>/kg</option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="form-field">
+                <label><%= lang === 'mr' ? 'प्रमाण (किलो)' : 'Quantity (kg)' %> *</label>
+                <input type="number" id="sm_qty" min="1" value="5" required onchange="updateSubPrice()">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label><%= lang === 'mr' ? 'वारंवारता' : 'Frequency' %></label>
+                <select id="sm_freq">
+                  <option value="monthly"><%= lang === 'mr' ? 'दरमहा' : 'Monthly' %></option>
+                  <option value="biweekly"><%= lang === 'mr' ? 'दर पंधरा दिवस' : 'Bi-Weekly' %></option>
+                  <option value="weekly"><%= lang === 'mr' ? 'दर आठवडा' : 'Weekly' %></option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label><%= lang === 'mr' ? 'टोपणी' : 'Notes' %></label>
+                <input type="text" id="sm_notes">
+              </div>
+            </div>
+            <div class="order-total">
+              <%= lang === 'mr' ? 'दरमहा' : 'Monthly Total' %>: <strong id="sm_total">₹<%= products[0] ? products[0].price * 5 : 0 %></strong>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button type="button" class="btn-cancel" onclick="closeSubModal()"><%= lang === 'mr' ? 'रद्द करा' : 'Cancel' %></button>
+            <button type="submit" class="btn-submit"><%= lang === 'mr' ? 'सबस्क्राइब करा' : 'Subscribe' %></button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="siteToast" class="site-toast"></div>
+
+    <style>
+      /* MODALS */
+      .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; padding:20px; }
+      .modal-overlay.show { display:flex; }
+      .modal-box { background:#fff; border-radius:20px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+      .modal-head { padding:20px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
+      .modal-head h3 { font-size:1.1rem; color:var(--green-dark); }
+      .modal-x { background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999; padding:4px 8px; border-radius:8px; }
+      .modal-x:hover { background:#f0f0f0; }
+      .modal-body-inner { padding:24px; }
+      .modal-foot { padding:16px 24px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px; }
+      .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+      .form-field { margin-bottom:16px; }
+      .form-field label { display:block; font-weight:600; color:#333; margin-bottom:6px; font-size:0.8rem; }
+      .form-field input, .form-field select, .form-field textarea { width:100%; padding:10px 14px; border:2px solid #e0e0e0; border-radius:10px; font-size:0.9rem; font-family:'Poppins',sans-serif; transition:border-color 0.2s; }
+      .form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline:none; border-color:var(--green-mid); }
+      .order-total { background:var(--green-pale); padding:14px 20px; border-radius:12px; text-align:center; font-size:1.1rem; font-weight:600; color:var(--green-dark); margin-top:8px; }
+      .btn-cancel { padding:10px 24px; background:#f0f0f0; border:none; border-radius:10px; cursor:pointer; font-weight:600; font-family:'Poppins',sans-serif; }
+      .btn-submit { padding:10px 28px; background:linear-gradient(135deg,var(--green-dark),var(--green-mid)); color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:600; font-family:'Poppins',sans-serif; font-size:0.95rem; }
+      .btn-submit:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(45,90,39,0.3); }
+      .site-toast { position:fixed; top:20px; right:20px; padding:16px 28px; border-radius:12px; color:#fff; font-weight:600; font-size:0.9rem; z-index:2000; transform:translateX(120%); transition:transform 0.3s ease; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+      .site-toast.show { transform:translateX(0); }
+      .site-toast.success { background:#28a745; }
+      .site-toast.error { background:#dc3545; }
+      @media(max-width:600px) { .form-row { grid-template-columns:1fr; } }
+    </style>
+
+    <script>
+      const lang = '<%= lang %>';
+
+      // ORDER MODAL
+      function openOrderModal(productId, productName, price) {
+        document.getElementById('om_productId').value = productId;
+        document.getElementById('om_product').value = productId;
+        updateOrderPrice();
+        document.getElementById('orderModal').classList.add('show');
+      }
+      function closeOrderModal() { document.getElementById('orderModal').classList.remove('show'); }
+
+      function updateOrderPrice() {
+        const sel = document.getElementById('om_product');
+        const price = parseInt(sel.options[sel.selectedIndex].dataset.price);
+        const qty = parseInt(document.getElementById('om_qty').value) || 1;
+        document.getElementById('om_total').textContent = '₹' + (price * qty).toLocaleString('en-IN');
+      }
+
+      async function submitOrder(e) {
+        e.preventDefault();
+        const data = {
+          customerName: document.getElementById('om_name').value,
+          phone: document.getElementById('om_phone').value,
+          address: document.getElementById('om_address').value,
+          items: [{
+            productId: document.getElementById('om_product').value,
+            quantity: parseInt(document.getElementById('om_qty').value)
+          }],
+          notes: document.getElementById('om_notes').value
+        };
+        try {
+          const res = await fetch('/api/order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (res.ok) {
+            const result = await res.json();
+            closeOrderModal();
+            showSiteToast(lang === 'mr' ? 'ऑर्डर यशस्वी! आम्ही लवकर संपर्क करू.' : 'Order placed! We will contact you soon.', 'success');
+            document.getElementById('orderForm').reset();
+            // Also open WhatsApp with order details
+            const pName = document.getElementById('om_product').options[document.getElementById('om_product').selectedIndex].text;
+            const waMsg = encodeURIComponent('Order #' + result.order.id + '\n' + data.customerName + '\n' + pName + ' x' + data.items[0].quantity + '\nTotal: ₹' + result.order.total);
+            window.open('https://wa.me/919869352049?text=' + waMsg, '_blank');
+          } else {
+            showSiteToast(lang === 'mr' ? 'ऑर्डरमध्ये त्रुटी' : 'Error placing order', 'error');
+          }
+        } catch (err) {
+          showSiteToast(lang === 'mr' ? 'नेटवर्क त्रुटी' : 'Network error', 'error');
+        }
+      }
+
+      // SUBSCRIPTION MODAL
+      function openSubscribeModal() {
+        updateSubPrice();
+        document.getElementById('subModal').classList.add('show');
+      }
+      function closeSubModal() { document.getElementById('subModal').classList.remove('show'); }
+
+      function updateSubPrice() {
+        const sel = document.getElementById('sm_product');
+        const price = parseInt(sel.options[sel.selectedIndex].dataset.price);
+        const qty = parseInt(document.getElementById('sm_qty').value) || 5;
+        document.getElementById('sm_total').textContent = '₹' + (price * qty).toLocaleString('en-IN');
+      }
+
+      async function submitSubscription(e) {
+        e.preventDefault();
+        const data = {
+          customerName: document.getElementById('sm_name').value,
+          phone: document.getElementById('sm_phone').value,
+          address: document.getElementById('sm_address').value,
+          productId: document.getElementById('sm_product').value,
+          quantity: parseInt(document.getElementById('sm_qty').value),
+          frequency: document.getElementById('sm_freq').value,
+          notes: document.getElementById('sm_notes').value
+        };
+        try {
+          const res = await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (res.ok) {
+            closeSubModal();
+            showSiteToast(lang === 'mr' ? 'सबस्क्रिप्शन यशस्वी! धन्यवाद.' : 'Subscription activated! Thank you.', 'success');
+            document.getElementById('subForm').reset();
+            const pName = document.getElementById('sm_product').options[document.getElementById('sm_product').selectedIndex].text;
+            const waMsg = encodeURIComponent('Subscription for ' + data.customerName + '\n' + pName + ' x' + data.quantity + 'kg (' + data.frequency + ')');
+            window.open('https://wa.me/919869352049?text=' + waMsg, '_blank');
+          } else {
+            showSiteToast(lang === 'mr' ? 'सबस्क्रिप्शनमध्ये त्रुटी' : 'Error activating subscription', 'error');
+          }
+        } catch (err) {
+          showSiteToast(lang === 'mr' ? 'नेटवर्क त्रुटी' : 'Network error', 'error');
+        }
+      }
+
+      // TOAST
+      function showSiteToast(msg, type) {
+        const t = document.getElementById('siteToast');
+        t.textContent = msg;
+        t.className = 'site-toast ' + (type || 'success') + ' show';
+        setTimeout(() => t.classList.remove('show'), 4000);
+      }
+
+      // ESC closes modals
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { closeOrderModal(); closeSubModal(); }
+      });
+    </script>
 </body>
 </html>
