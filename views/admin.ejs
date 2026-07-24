@@ -408,8 +408,16 @@
 
           <div class="form-section">Photo</div>
           <div class="form-group">
-            <label>Image URL (leave empty to use emoji placeholder)</label>
-            <input type="text" id="pf_image" placeholder="https://example.com/product.jpg">
+            <label>Product Photo (Google Drive link or direct image URL)</label>
+            <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+              <div style="flex:1;min-width:200px">
+                <input type="text" id="pf_image" placeholder="Paste Google Drive link or image URL" style="width:100%">
+                <small style="color:#888;font-size:0.75rem">Google Drive links auto-convert. Direct URLs (Imgur, etc.) also work.</small>
+              </div>
+              <div id="pf_imagePreview" style="width:80px;height:80px;border-radius:8px;overflow:hidden;background:#f0f0f0;display:none;flex-shrink:0">
+                <img id="pf_previewImg" src="" style="width:100%;height:100%;object-fit:cover">
+              </div>
+            </div>
           </div>
 
           <div class="form-section">Ingredients</div>
@@ -473,6 +481,33 @@
       setTimeout(() => t.classList.remove('show'), 3000);
     }
 
+    // Google Drive URL auto-converter
+    function convertImageUrl(url) {
+      if (!url) return '';
+      url = url.trim();
+      var m = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+      m = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+      if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+      m = url.match(/drive\.google\.com\/uc\?export=view&(?:amp;)?id=([a-zA-Z0-9_-]+)/);
+      if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+      return url;
+    }
+
+    // Live preview on paste
+    document.getElementById('pf_image').addEventListener('input', function() {
+      var url = convertImageUrl(this.value);
+      var preview = document.getElementById('pf_imagePreview');
+      var img = document.getElementById('pf_previewImg');
+      if (url) {
+        img.src = url;
+        preview.style.display = 'block';
+        img.onerror = function() { preview.style.display = 'none'; };
+      } else {
+        preview.style.display = 'none';
+      }
+    });
+
     // PRODUCT MODAL
     function openProductModal(product) {
       const m = document.getElementById('productModal');
@@ -496,6 +531,16 @@
         document.getElementById('pf_tags').value = (product.tags || []).join(', ');
         document.getElementById('pf_tags_mr').value = (product.tags_mr || []).join(', ');
         document.getElementById('pf_image').value = product.image || '';
+        // Show preview if image exists
+        if (product.image) {
+          var preview = document.getElementById('pf_imagePreview');
+          var img = document.getElementById('pf_previewImg');
+          img.src = product.image;
+          preview.style.display = 'block';
+          img.onerror = function() { preview.style.display = 'none'; };
+        } else {
+          document.getElementById('pf_imagePreview').style.display = 'none';
+        }
         document.getElementById('pf_ing_en').value = product.ingredients_en || '';
         document.getElementById('pf_ing_mr').value = product.ingredients_mr || '';
         const n = product.nutrition || {};
@@ -538,7 +583,7 @@
         badge_mr: document.getElementById('pf_badge_mr').value,
         tags: document.getElementById('pf_tags').value.split(',').map(s => s.trim()).filter(Boolean),
         tags_mr: document.getElementById('pf_tags_mr').value.split(',').map(s => s.trim()).filter(Boolean),
-        image: document.getElementById('pf_image').value,
+        image: convertImageUrl(document.getElementById('pf_image').value),
         ingredients_en: document.getElementById('pf_ing_en').value,
         ingredients_mr: document.getElementById('pf_ing_mr').value,
         nutrition: {

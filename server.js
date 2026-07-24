@@ -55,6 +55,42 @@ function generateId(prefix) {
   return `${prefix}-${ts}${rand}`.toUpperCase();
 }
 
+// Auto-convert Google Drive URLs to direct image CDN
+function convertGoogleDriveUrl(url) {
+  if (!url) return '';
+  const m1 = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m1) return 'https://lh3.googleusercontent.com/d/' + m1[1];
+  const m2 = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+  if (m2) return 'https://lh3.googleusercontent.com/d/' + m2[1];
+  const m3 = url.match(/drive\.google\.com\/uc\?export=view&(?:amp;)?id=([a-zA-Z0-9_-]+)/);
+  if (m3) return 'https://lh3.googleusercontent.com/d/' + m3[1];
+  return url;
+}
+
+// Get all products from Supabase
+async function getProducts() {
+  const { data, error } = await supabase
+    .from('aap_products')
+    .select('*')
+    .order('price', { ascending: true });
+  if (error) {
+    console.error('Supabase getProducts error:', error.message);
+    return [];
+  }
+  return (data || []).map(p => ({ ...p, image: convertGoogleDriveUrl(p.image) }));
+}
+
+// Get single product by id
+async function getProductById(id) {
+  const { data, error } = await supabase
+    .from('aap_products')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) return null;
+  return { ...data, image: convertGoogleDriveUrl(data.image) };
+}
+
 // ─── Auth middleware ─────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
   if (req.session && req.session.isAdmin) return next();
@@ -65,15 +101,15 @@ function requireAuth(req, res, next) {
 }
 
 // ─── Public routes ──────────────────────────────────────────────────────────
-app.get('/', (req, res) => {
-  const data = readData('products.json');
-  const products = data.products.filter(p => p.active !== false);
+app.get('/', async (req, res) => {
+  const allProducts = await getProducts();
+  const products = allProducts.filter(p => p.active !== false);
   res.render('index', { products, lang: 'en' });
 });
 
-app.get('/mr', (req, res) => {
-  const data = readData('products.json');
-  const products = data.products.filter(p => p.active !== false);
+app.get('/mr', async (req, res) => {
+  const allProducts = await getProducts();
+  const products = allProducts.filter(p => p.active !== false);
   res.render('index', { products, lang: 'mr' });
 });
 
@@ -109,9 +145,9 @@ app.post('/api/order', async (req, res) => {
       return res.status(400).json({ error: 'customerName, phone, and items are required' });
     }
 
-    const productsData = readData('products.json');
+    const allProducts = await getProducts();
     const productMap = {};
-    productsData.products.forEach(p => { productMap[p.id] = p; });
+    allProducts.forEach(p => { productMap[p.id] = p; });
 
     const enrichedItems = items.map(item => {
       const product = productMap[item.productId];
@@ -182,8 +218,8 @@ app.post('/api/subscribe', async (req, res) => {
       return res.status(400).json({ error: 'customerName, phone, and productId are required' });
     }
 
-    const productsData = readData('products.json');
-    const product = productsData.products.find(p => p.id === productId);
+    const allProducts = await getProducts();
+    const product = allProducts.find(p => p.id === productId);
     const price = product ? product.price : 180;
     const qty = quantity || 5;
     const freq = frequency || 'monthly';
@@ -263,7 +299,7 @@ app.get('/admin/logout', (req, res) => {
 
 // ─── Admin dashboard ────────────────────────────────────────────────────────
 app.get('/admin', requireAuth, async (req, res) => {
-  const products = readData('products.json');
+  const products = await getProducts();
 
   const { data: orders } = await supabase
     .from('aap_orders')
@@ -287,7 +323,7 @@ app.get('/admin', requireAuth, async (req, res) => {
     .order('delivered_date', { ascending: false });
 
   res.render('admin', {
-    products: products.products,
+    products: products,
     orders: orders || [],
     subscriptions: subscriptions || [],
     customers: customers || [],
@@ -295,15 +331,14 @@ app.get('/admin', requireAuth, async (req, res) => {
   });
 });
 
-// ─── Protected API: Products ────────────────────────────────────────────────
-app.get('/api/products', requireAuth, (req, res) => {
-  const data = readData('products.json');
-  res.json(data.products);
+// ─── Protected API: Products (Supabase) ─────────────────────────────────────
+app.get('/api/products', requireAuth, async (req, res) => {
+  const products = await getProducts();
+  res.json(products);
 });
 
-app.post('/api/products', requireAuth, (req, res) => {
+app.post('/api/products', requireAuth, async (req, res) => {
   try {
-    const data = readData('products.json');
     const product = {
       id: req.body.id || generateId('PROD'),
       name_en: req.body.name_en || '',
@@ -318,43 +353,54 @@ app.post('/api/products', requireAuth, (req, res) => {
       tags_mr: req.body.tags_mr || [],
       icon: req.body.icon || '',
       emoji: req.body.emoji || '',
-      image: req.body.image || '',
+      image: convertGoogleDriveUrl(req.body.image || ''),
       category: req.body.category || 'millet',
       active: req.body.active !== undefined ? req.body.active : true,
       ingredients_en: req.body.ingredients_en || '',
       ingredients_mr: req.body.ingredients_mr || '',
       nutrition: req.body.nutrition || { calories: 0, protein: 0, fiber: 0, carbs: 0, fat: 0 }
     };
-    data.products.push(product);
-    writeData('products.json', data);
-    res.status(201).json(product);
+    const { data, error } = await supabase
+      .from('aap_products')
+      .insert(product)
+      .select()
+      .single();
+    if (error) throw error;
+    res.status(201).json(data);
   } catch (err) {
     console.error('POST /api/products error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.put('/api/products/:id', requireAuth, (req, res) => {
+app.put('/api/products/:id', requireAuth, async (req, res) => {
   try {
-    const data = readData('products.json');
-    const idx = data.products.findIndex(p => p.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ error: 'Product not found' });
-    data.products[idx] = { ...data.products[idx], ...req.body, id: req.params.id };
-    writeData('products.json', data);
-    res.json(data.products[idx]);
+    const updates = { ...req.body, id: undefined, updated_at: new Date().toISOString() };
+    if (updates.image !== undefined) {
+      updates.image = convertGoogleDriveUrl(updates.image);
+    }
+    const { data, error } = await supabase
+      .from('aap_products')
+      .update(updates)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Product not found' });
+    res.json(data);
   } catch (err) {
     console.error('PUT /api/products error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.delete('/api/products/:id', requireAuth, (req, res) => {
+app.delete('/api/products/:id', requireAuth, async (req, res) => {
   try {
-    const data = readData('products.json');
-    const idx = data.products.findIndex(p => p.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ error: 'Product not found' });
-    data.products.splice(idx, 1);
-    writeData('products.json', data);
+    const { error } = await supabase
+      .from('aap_products')
+      .delete()
+      .eq('id', req.params.id);
+    if (error) throw error;
     res.json({ success: true });
   } catch (err) {
     console.error('DELETE /api/products error:', err);

@@ -698,8 +698,13 @@
             <% products.forEach((product, i) => { %>
                 <div class="product-card">
                     <div class="product-visual" style="background: <%= bgColors[i] %>;">
-                        <div class="grain-bg">🌾</div>
-                        <span class="product-emoji"><%= emojis[i] %></span>
+                        <% if (product.image) { %>
+                            <img src="<%= product.image %>" alt="<%= product['name_' + lang] %>" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:2" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                            <span class="product-emoji" style="display:none"><%= product.emoji || emojis[i] %></span>
+                        <% } else { %>
+                            <div class="grain-bg">🌾</div>
+                            <span class="product-emoji"><%= product.emoji || emojis[i] %></span>
+                        <% } %>
                         <span class="product-badge"><%= product['badge_' + lang] %></span>
                     </div>
                     <div class="product-info">
