@@ -1059,12 +1059,13 @@
           });
           if (res.ok) {
             const result = await res.json();
+            const pName = document.getElementById('om_product').options[document.getElementById('om_product').selectedIndex].text;
+            const qty = data.items[0].quantity;
             closeOrderModal();
             showSiteToast(lang === 'mr' ? 'ऑर्डर यशस्वी! आम्ही लवकर संपर्क करू.' : 'Order placed! We will contact you soon.', 'success');
             document.getElementById('orderForm').reset();
             // Also open WhatsApp with order details
-            const pName = document.getElementById('om_product').options[document.getElementById('om_product').selectedIndex].text;
-            const waMsg = encodeURIComponent('Order #' + result.order.id + '\n' + data.customerName + '\n' + pName + ' x' + data.items[0].quantity + '\nTotal: ₹' + result.order.total);
+            const waMsg = encodeURIComponent('Order #' + result.order.id + '\n' + data.customerName + '\n' + pName + ' x' + qty + '\nTotal: ₹' + result.order.total);
             window.open('https://wa.me/919869352049?text=' + waMsg, '_blank');
           } else {
             showSiteToast(lang === 'mr' ? 'ऑर्डरमध्ये त्रुटी' : 'Error placing order', 'error');
@@ -1106,11 +1107,13 @@
             body: JSON.stringify(data)
           });
           if (res.ok) {
+            const pName = document.getElementById('sm_product').options[document.getElementById('sm_product').selectedIndex].text;
+            const qty = data.quantity;
+            const freq = data.frequency;
             closeSubModal();
             showSiteToast(lang === 'mr' ? 'सबस्क्रिप्शन यशस्वी! धन्यवाद.' : 'Subscription activated! Thank you.', 'success');
             document.getElementById('subForm').reset();
-            const pName = document.getElementById('sm_product').options[document.getElementById('sm_product').selectedIndex].text;
-            const waMsg = encodeURIComponent('Subscription for ' + data.customerName + '\n' + pName + ' x' + data.quantity + 'kg (' + data.frequency + ')');
+            const waMsg = encodeURIComponent('Subscription for ' + data.customerName + '\n' + pName + ' x' + qty + 'kg (' + freq + ')');
             window.open('https://wa.me/919869352049?text=' + waMsg, '_blank');
           } else {
             showSiteToast(lang === 'mr' ? 'सबस्क्रिप्शनमध्ये त्रुटी' : 'Error activating subscription', 'error');
