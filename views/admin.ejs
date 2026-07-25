@@ -22,8 +22,8 @@
 
     /* STATS */
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
-    .stat-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; transition: transform 0.2s; }
-    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; transition: transform 0.2s; cursor: pointer; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
     .stat-card .number { font-size: 2rem; font-weight: 700; color: #2d5a27; }
     .stat-card .label { color: #888; font-size: 0.85rem; margin-top: 4px; }
 
@@ -149,31 +149,31 @@
   <div class="container">
     <!-- STATS -->
     <div class="stats">
-      <div class="stat-card">
+      <div class="stat-card" onclick="document.querySelectorAll('.tab')[0].click()">
         <div class="number"><%= products.length %></div>
         <div class="label">Total Products</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" onclick="document.querySelectorAll('.tab')[0].click()">
         <div class="number"><%= products.filter(p => p.active !== false).length %></div>
         <div class="label">Active Products</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" onclick="document.querySelectorAll('.tab')[1].click()">
         <div class="number"><%= orders.length %></div>
         <div class="label">Total Orders</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" onclick="document.querySelectorAll('.tab')[1].click()">
         <div class="number"><%= orders.filter(o => o.status === 'pending').length %></div>
         <div class="label">Pending Orders</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" onclick="document.querySelectorAll('.tab')[2].click()">
         <div class="number"><%= subscriptions.filter(s => s.status === 'active').length %></div>
         <div class="label">Active Subscriptions</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" onclick="document.querySelectorAll('.tab')[1].click()">
         <div class="number">₹<%= (orders.reduce((sum, o) => sum + (o.total || 0), 0) + deliveries.reduce((sum, d) => sum + ((d.aap_subscriptions && d.aap_subscriptions.price) || 0), 0)).toLocaleString('en-IN') %></div>
         <div class="label">Total Revenue (Orders + Subs)</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" onclick="document.querySelectorAll('.tab')[2].click()">
         <div class="number"><%= deliveries.length %></div>
         <div class="label">Sub Deliveries Made</div>
       </div>
