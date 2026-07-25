@@ -141,8 +141,8 @@ app.get('/business-plan', (req, res) => {
 app.post('/api/order', async (req, res) => {
   try {
     const { customerName, phone, address, items, notes } = req.body;
-    if (!customerName || !phone || !items || !items.length) {
-      return res.status(400).json({ error: 'customerName, phone, and items are required' });
+    if (!customerName || !items || !items.length) {
+      return res.status(400).json({ error: 'customerName and items are required' });
     }
 
     const allProducts = await getProducts();

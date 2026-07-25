@@ -23,14 +23,19 @@ Parse the customer message and extract:
 2. phone (if mentioned)
 3. intent: "order" | "inquiry" | "subscription" | "complaint" | "other"
 4. products: array of {productId, quantity} — match to known products:
-   - "diabetic" → diabetic-atta
-   - "barley" → barley-dosa-atta
-   - "moong" or "moong dal" → moong-dal-dosa-atta
-   - "nachani" or "ragi" → nachani-dosa-atta
-   - "jwari" or "jowar" → jwari-dosa-atta
-   - "bajri" or "bajra" → bajri-dosa-atta
-   - "mixed" or "mix dal" → mixed-dal-dosa-atta
+   - "diabetic" or "मधुमेह" → diabetic-atta
+   - "barley" or "बार्ली" → barley-dosa-atta
+   - "moong" or "moong dal" or "मूग" → moong-dal-dosa-atta
+   - "nachani" or "ragi" or "नाचणी" → nachani-dosa-atta
+   - "jwari" or "jowar" or "ज्वारी" → jwari-dosa-atta
+   - "bajri" or "bajra" or "बाजरी" → bajri-dosa-atta
+   - "mixed" or "mix dal" or "मिक्स" → mixed-dal-dosa-atta
 5. notes: any special requests
+
+The message may be a WhatsApp Business catalogue order card with lines like:
+- "1x Nachani Dosa Atta (1 kg) — ₹225"
+- "• 1 kg Barley Dosa Atta"
+- Product names may be in English, Hindi, or Marathi
 
 Respond ONLY with valid JSON, no markdown, no explanation:
 {"customer_name": "", "phone": "", "intent": "", "products": [], "notes": ""}`;
@@ -84,11 +89,13 @@ async function parseMessage(rawMessage) {
 
   // If intent is order and we have products, create the order
   if (result.intent === 'order' && result.products && result.products.length > 0) {
-    const productsData = require('fs').readFileSync(
-      require('path').join(__dirname, '..', 'data', 'products.json'), 'utf8'
-    );
+    const { data: productsList } = await supabase
+      .from('aap_products')
+      .select('id, price, name_en')
+      .eq('active', true);
+
     const productMap = {};
-    JSON.parse(productsData).products.forEach(p => { productMap[p.id] = p; });
+    (productsList || []).forEach(p => { productMap[p.id] = p; });
 
     const enrichedItems = result.products.map(item => {
       const product = productMap[item.productId];
