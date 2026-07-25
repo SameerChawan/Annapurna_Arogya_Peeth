@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= lang === 'mr' ? 'अन्नपूर्णा आरोग्य पीठ — आईच्या हाताने, नैसर्गिक पीठ' : 'Annapurna Arogya Peeth — Homemade, Natural Flour' %></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="icon" type="image/png" href="/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tiro+Devanagari+Marathi&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -698,8 +699,13 @@
             <% products.forEach((product, i) => { %>
                 <div class="product-card">
                     <div class="product-visual" style="background: <%= bgColors[i] %>;">
-                        <div class="grain-bg">🌾</div>
-                        <span class="product-emoji"><%= emojis[i] %></span>
+                        <% if (product.image) { %>
+                            <img src="<%= product.image %>" alt="<%= product['name_' + lang] %>" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:2" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                            <span class="product-emoji" style="display:none"><%= product.emoji || emojis[i] %></span>
+                        <% } else { %>
+                            <div class="grain-bg">🌾</div>
+                            <span class="product-emoji"><%= product.emoji || emojis[i] %></span>
+                        <% } %>
                         <span class="product-badge"><%= product['badge_' + lang] %></span>
                     </div>
                     <div class="product-info">
@@ -1054,12 +1060,13 @@
           });
           if (res.ok) {
             const result = await res.json();
+            const pName = document.getElementById('om_product').options[document.getElementById('om_product').selectedIndex].text;
+            const qty = data.items[0].quantity;
             closeOrderModal();
             showSiteToast(lang === 'mr' ? 'ऑर्डर यशस्वी! आम्ही लवकर संपर्क करू.' : 'Order placed! We will contact you soon.', 'success');
             document.getElementById('orderForm').reset();
             // Also open WhatsApp with order details
-            const pName = document.getElementById('om_product').options[document.getElementById('om_product').selectedIndex].text;
-            const waMsg = encodeURIComponent('Order #' + result.order.id + '\n' + data.customerName + '\n' + pName + ' x' + data.items[0].quantity + '\nTotal: ₹' + result.order.total);
+            const waMsg = encodeURIComponent('Order #' + result.order.id + '\n' + data.customerName + '\n' + pName + ' x' + qty + '\nTotal: ₹' + result.order.total);
             window.open('https://wa.me/919869352049?text=' + waMsg, '_blank');
           } else {
             showSiteToast(lang === 'mr' ? 'ऑर्डरमध्ये त्रुटी' : 'Error placing order', 'error');
@@ -1101,11 +1108,13 @@
             body: JSON.stringify(data)
           });
           if (res.ok) {
+            const pName = document.getElementById('sm_product').options[document.getElementById('sm_product').selectedIndex].text;
+            const qty = data.quantity;
+            const freq = data.frequency;
             closeSubModal();
             showSiteToast(lang === 'mr' ? 'सबस्क्रिप्शन यशस्वी! धन्यवाद.' : 'Subscription activated! Thank you.', 'success');
             document.getElementById('subForm').reset();
-            const pName = document.getElementById('sm_product').options[document.getElementById('sm_product').selectedIndex].text;
-            const waMsg = encodeURIComponent('Subscription for ' + data.customerName + '\n' + pName + ' x' + data.quantity + 'kg (' + data.frequency + ')');
+            const waMsg = encodeURIComponent('Subscription for ' + data.customerName + '\n' + pName + ' x' + qty + 'kg (' + freq + ')');
             window.open('https://wa.me/919869352049?text=' + waMsg, '_blank');
           } else {
             showSiteToast(lang === 'mr' ? 'सबस्क्रिप्शनमध्ये त्रुटी' : 'Error activating subscription', 'error');
