@@ -27,6 +27,22 @@
     .stat-card .number { font-size: 2rem; font-weight: 700; color: #2d5a27; }
     .stat-card .label { color: #888; font-size: 0.85rem; margin-top: 4px; }
 
+    /* QUICK ORDER FORM */
+    .quick-order { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 2px dashed #d0d5dd; }
+    .quick-order h3 { font-size: 1rem; color: #2d5a27; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .qo-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .qo-field label { display: block; font-size: 0.75rem; font-weight: 600; color: #555; margin-bottom: 4px; }
+    .qo-field input, .qo-field select { width: 100%; padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 0.85rem; }
+    .qo-field input:focus, .qo-field select:focus { outline: none; border-color: #4a7c3f; }
+    .qo-add-row { display: flex; gap: 8px; align-items: end; margin-bottom: 12px; }
+    .qo-add-row select { flex: 1; padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 0.85rem; }
+    .qo-add-row input { width: 80px; padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 0.85rem; text-align: center; }
+    .qo-items { margin-bottom: 12px; }
+    .qo-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #fff; border-radius: 8px; margin-bottom: 4px; border: 1px solid #e8ecf1; }
+    .qo-item .remove { cursor: pointer; color: #dc3545; font-weight: 700; padding: 0 4px; }
+    .qo-total { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #e8f5e1; border-radius: 10px; margin-top: 12px; }
+    .qo-total span:last-child { font-size: 1.2rem; font-weight: 700; color: #2d5a27; }
+
     /* TABS */
     .tabs { display: flex; gap: 4px; margin-bottom: 0; }
     .tab { padding: 12px 28px; background: #fff; border: none; border-radius: 12px 12px 0 0; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #666; transition: all 0.2s; font-family: 'Poppins', sans-serif; }
@@ -213,6 +229,48 @@
         <h2>Customer Orders</h2>
         <button class="btn btn-primary" onclick="openPasteOrderModal()">Paste Order</button>
       </div>
+
+      <!-- QUICK ORDER ENTRY -->
+      <div class="quick-order">
+        <h3>Quick Order Entry</h3>
+        <div class="qo-row">
+          <div class="qo-field">
+            <label>Customer Name *</label>
+            <input type="text" id="qo_name" placeholder="Full name">
+          </div>
+          <div class="qo-field">
+            <label>Phone</label>
+            <input type="tel" id="qo_phone" placeholder="9876543210" pattern="[0-9]{10}">
+          </div>
+          <div class="qo-field">
+            <label>Address</label>
+            <input type="text" id="qo_address" placeholder="Delivery address">
+          </div>
+        </div>
+        <div class="qo-add-row">
+          <div style="flex:1">
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:#555;margin-bottom:4px">Add Product</label>
+            <select id="qo_product">
+              <option value="">Select product...</option>
+              <% products.filter(p => p.active !== false).forEach(p => { %>
+                <option value="<%= p.id %>" data-price="<%= p.price %>" data-name="<%= p.name_en %>"><%= p.emoji || '🌾' %> <%= p.name_en %> — ₹<%= p.price %>/kg</option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:#555;margin-bottom:4px">Qty (kg)</label>
+            <input type="number" id="qo_qty" value="1" min="1" max="50">
+          </div>
+          <button class="btn btn-primary" onclick="addQuickItem()" style="padding:8px 16px">+ Add</button>
+        </div>
+        <div id="qo_items" class="qo-items"></div>
+        <div id="qo_total" class="qo-total" style="display:none">
+          <span style="font-weight:600">Total</span>
+          <span>₹0</span>
+        </div>
+        <button id="qo_submit" class="btn btn-primary" style="width:100%;margin-top:12px;display:none" onclick="submitQuickOrder()">Create Order</button>
+      </div>
+
       <% if (orders.length === 0) { %>
         <div class="empty">No orders yet. Orders will appear here when customers place them.</div>
       <% } else { %>
@@ -640,6 +698,102 @@
         }
       } catch (err) {
         showToast('Network error', 'error');
+      }
+    }
+
+    // QUICK ORDER ENTRY
+    const quickItems = [];
+
+    function addQuickItem() {
+      const sel = document.getElementById('qo_product');
+      const opt = sel.options[sel.selectedIndex];
+      if (!opt.value) return showToast('Select a product', 'error');
+
+      const qty = parseInt(document.getElementById('qo_qty').value) || 1;
+      const existing = quickItems.find(i => i.productId === opt.value);
+      if (existing) {
+        existing.quantity += qty;
+      } else {
+        quickItems.push({
+          productId: opt.value,
+          name: opt.dataset.name,
+          price: parseInt(opt.dataset.price),
+          quantity: qty
+        });
+      }
+      sel.selectedIndex = 0;
+      document.getElementById('qo_qty').value = 1;
+      renderQuickItems();
+    }
+
+    function removeQuickItem(idx) {
+      quickItems.splice(idx, 1);
+      renderQuickItems();
+    }
+
+    function renderQuickItems() {
+      const div = document.getElementById('qo_items');
+      const totalDiv = document.getElementById('qo_total');
+      const submitBtn = document.getElementById('qo_submit');
+
+      if (quickItems.length === 0) {
+        div.innerHTML = '';
+        totalDiv.style.display = 'none';
+        submitBtn.style.display = 'none';
+        return;
+      }
+
+      div.innerHTML = quickItems.map((item, i) =>
+        '<div class="qo-item"><span>' + item.name + ' × ' + item.quantity + ' kg</span><span>₹' + (item.price * item.quantity).toLocaleString('en-IN') + ' <span class="remove" onclick="removeQuickItem(' + i + ')">×</span></span></div>'
+      ).join('');
+
+      const total = quickItems.reduce((s, i) => s + i.price * i.quantity, 0);
+      totalDiv.querySelector('span:last-child').textContent = '₹' + total.toLocaleString('en-IN');
+      totalDiv.style.display = 'flex';
+      submitBtn.style.display = 'block';
+    }
+
+    async function submitQuickOrder() {
+      const name = document.getElementById('qo_name').value.trim();
+      const phone = document.getElementById('qo_phone').value.trim();
+      const address = document.getElementById('qo_address').value.trim();
+
+      if (!name) return showToast('Customer name is required', 'error');
+      if (quickItems.length === 0) return showToast('Add at least one product', 'error');
+
+      const btn = document.getElementById('qo_submit');
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+
+      try {
+        const res = await fetch('/api/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName: name,
+            phone: phone || '',
+            address: address,
+            items: quickItems.map(i => ({ productId: i.productId, quantity: i.quantity }))
+          })
+        });
+        const data = await res.json();
+        if (data.ok || data.order) {
+          const total = quickItems.reduce((s, i) => s + i.price * i.quantity, 0);
+          showToast('Order created! Total: ₹' + total.toLocaleString('en-IN'), 'success');
+          quickItems.length = 0;
+          renderQuickItems();
+          document.getElementById('qo_name').value = '';
+          document.getElementById('qo_phone').value = '';
+          document.getElementById('qo_address').value = '';
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showToast(data.error || 'Error creating order', 'error');
+        }
+      } catch (err) {
+        showToast('Network error', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Order';
       }
     }
 
