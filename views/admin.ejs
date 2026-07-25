@@ -116,6 +116,7 @@
 <body>
   <!-- TOAST -->
   <div id="toast" class="toast"></div>
+  <% const productsMap = {}; products.forEach(p => { productsMap[p.id] = p; }); %>
 
   <!-- TOPBAR -->
   <div class="topbar">
@@ -227,7 +228,7 @@
                 <td>
                   <ul class="order-items">
                     <% (o.items || []).forEach(item => { %>
-                      <li><%= item.productId %> x<%= item.quantity %> — ₹<%= item.price * item.quantity %></li>
+                      <li><%= (productsMap[item.productId] || {}).name_en || item.productId %> x<%= item.quantity %> — ₹<%= item.price * item.quantity %></li>
                     <% }) %>
                   </ul>
                 </td>
@@ -267,7 +268,7 @@
                 <td><strong><%= s.id.slice(0,8) %></strong></td>
                 <td><%= s.customer_name %><% if (s.address) { %><br><small style="color:#888"><%= s.address %></small><% } %></td>
                 <td><a href="tel:<%= s.phone %>" style="color:#2d5a27"><%= s.phone %></a></td>
-                <td><%= s.product_id %></td>
+                <td><%= (productsMap[s.product_id] || {}).name_en || s.product_id %></td>
                 <td><%= s.quantity %> kg</td>
                 <td><%= s.frequency %></td>
                 <td class="product-price">₹<%= s.price %></td>
