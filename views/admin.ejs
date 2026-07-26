@@ -158,7 +158,7 @@
         <div class="label">Active Products</div>
       </div>
       <div class="stat-card" onclick="document.querySelectorAll('.tab')[1].click()">
-        <div class="number"><%= orders.length %></div>
+        <div class="number"><%= orders.filter(o => o.status !== 'cancelled').length %></div>
         <div class="label">Total Orders</div>
       </div>
       <div class="stat-card" onclick="document.querySelectorAll('.tab')[1].click()">
@@ -170,7 +170,7 @@
         <div class="label">Active Subscriptions</div>
       </div>
       <div class="stat-card" onclick="document.querySelectorAll('.tab')[1].click()">
-        <div class="number">₹<%= (orders.reduce((sum, o) => sum + (o.total || 0), 0) + deliveries.reduce((sum, d) => sum + ((d.aap_subscriptions && d.aap_subscriptions.price) || 0), 0)).toLocaleString('en-IN') %></div>
+        <div class="number">₹<%= (orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0) + deliveries.reduce((sum, d) => sum + ((d.aap_subscriptions && d.aap_subscriptions.price) || 0), 0)).toLocaleString('en-IN') %></div>
         <div class="label">Total Revenue (Orders + Subs)</div>
       </div>
       <div class="stat-card" onclick="document.querySelectorAll('.tab')[2].click()">

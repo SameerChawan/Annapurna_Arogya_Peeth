@@ -588,11 +588,12 @@ app.get('/api/agents/brief', requireAuth, async (req, res) => {
       .select('*')
       .eq('status', 'pending_approval');
 
-    // Today's orders total
+    // Today's orders total (excluding cancelled)
     const { data: todayOrders } = await supabase
       .from('aap_orders')
-      .select('total')
-      .gte('order_date', today);
+      .select('total, status')
+      .gte('order_date', today)
+      .neq('status', 'cancelled');
 
     const todayRevenue = (todayOrders || []).reduce((sum, o) => sum + (o.total || 0), 0);
 
