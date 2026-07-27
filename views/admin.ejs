@@ -27,6 +27,12 @@
     .stat-card .number { font-size: 2rem; font-weight: 700; color: #2d5a27; }
     .stat-card .label { color: #888; font-size: 0.85rem; margin-top: 4px; }
 
+    /* FILTER BAR */
+    .filter-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 16px; border: 2px solid #e0e0e0; border-radius: 20px; background: #fff; color: #555; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif; }
+    .filter-btn:hover { border-color: #2d5a27; color: #2d5a27; }
+    .filter-btn.active { background: #2d5a27; border-color: #2d5a27; color: #fff; }
+
     /* QUICK ORDER FORM */
     .quick-order { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 2px dashed #d0d5dd; }
     .quick-order h3 { font-size: 1rem; color: #2d5a27; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
@@ -158,11 +164,11 @@
         <div class="label">Active Products</div>
       </div>
       <div class="stat-card" onclick="document.querySelectorAll('.tab')[1].click()">
-        <div class="number"><%= orders.filter(o => o.status !== 'cancelled').length %></div>
+        <div class="number" id="stat-total-orders"><%= orders.filter(o => o.status !== 'cancelled').length %></div>
         <div class="label">Total Orders</div>
       </div>
       <div class="stat-card" onclick="document.querySelectorAll('.tab')[1].click()">
-        <div class="number"><%= orders.filter(o => o.status === 'pending').length %></div>
+        <div class="number" id="stat-pending-orders"><%= orders.filter(o => o.status === 'pending').length %></div>
         <div class="label">Pending Orders</div>
       </div>
       <div class="stat-card" onclick="document.querySelectorAll('.tab')[2].click()">
@@ -170,11 +176,11 @@
         <div class="label">Active Subscriptions</div>
       </div>
       <div class="stat-card" onclick="document.querySelectorAll('.tab')[1].click()">
-        <div class="number">₹<%= (orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0) + deliveries.reduce((sum, d) => sum + ((d.aap_subscriptions && d.aap_subscriptions.price) || 0), 0)).toLocaleString('en-IN') %></div>
+        <div class="number" id="stat-revenue">₹<%= (orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0) + deliveries.reduce((sum, d) => sum + ((d.aap_subscriptions && d.aap_subscriptions.price) || 0), 0)).toLocaleString('en-IN') %></div>
         <div class="label">Total Revenue (Orders + Subs)</div>
       </div>
       <div class="stat-card" onclick="document.querySelectorAll('.tab')[2].click()">
-        <div class="number"><%= deliveries.length %></div>
+        <div class="number" id="stat-sub-deliveries"><%= deliveries.length %></div>
         <div class="label">Sub Deliveries Made</div>
       </div>
     </div>
@@ -227,7 +233,16 @@
     <div id="orders" class="panel">
       <div class="panel-header">
         <h2>Customer Orders</h2>
-        <button class="btn btn-primary" onclick="openPasteOrderModal()">Paste Order</button>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <div class="filter-bar">
+            <button class="filter-btn" onclick="applyFilter('wtd', this)">WTD</button>
+            <button class="filter-btn" onclick="applyFilter('mtd', this)">MTD</button>
+            <button class="filter-btn" onclick="applyFilter('ytd', this)">YTD</button>
+            <button class="filter-btn active" onclick="applyFilter('ltd', this)">LTD</button>
+          </div>
+          <button class="btn btn-success" onclick="exportCSV()">⬇ Export CSV</button>
+          <button class="btn btn-primary" onclick="openPasteOrderModal()">Paste Order</button>
+        </div>
       </div>
 
       <!-- QUICK ORDER ENTRY -->
@@ -271,14 +286,13 @@
         <button id="qo_submit" class="btn btn-primary" style="width:100%;margin-top:12px;display:none" onclick="submitQuickOrder()">Create Order</button>
       </div>
 
-      <% if (orders.length === 0) { %>
-        <div class="empty">No orders yet. Orders will appear here when customers place them.</div>
-      <% } else { %>
+      <div id="orders-empty" class="empty" style="display:<%= orders.length === 0 ? 'block' : 'none' %>">No orders found for the selected period.</div>
+      <% if (orders.length > 0) { %>
         <table>
           <thead>
             <tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Date</th><th>Status</th><th>Actions</th></tr>
           </thead>
-          <tbody>
+          <tbody id="orders-tbody">
             <% orders.slice().reverse().forEach(o => { %>
               <tr>
                 <td><strong><%= o.id.slice(0,8) %></strong></td>
@@ -525,6 +539,156 @@
   </div>
 
   <script>
+    // EMBED DATA FOR CLIENT-SIDE FILTERING
+    const ALL_ORDERS = <%- JSON.stringify(orders) %>;
+    const ALL_DELIVERIES = <%- JSON.stringify(deliveries) %>;
+    const PRODUCTS_MAP = <%- JSON.stringify(productsMap) %>;
+    const ALL_SUBSCRIPTIONS = <%- JSON.stringify(subscriptions) %>;
+
+    let currentFilter = 'ltd';
+
+    function getDateRange(filter) {
+      const now = new Date();
+      const start = new Date();
+      switch (filter) {
+        case 'wtd':
+          const day = now.getDay();
+          start.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+          start.setHours(0, 0, 0, 0);
+          break;
+        case 'mtd':
+          start.setDate(1);
+          start.setHours(0, 0, 0, 0);
+          break;
+        case 'ytd':
+          start.setMonth(0, 1);
+          start.setHours(0, 0, 0, 0);
+          break;
+        case 'ltd':
+        default:
+          return null;
+      }
+      return start;
+    }
+
+    function filterOrders(filter) {
+      const range = getDateRange(filter);
+      if (!range) return ALL_ORDERS.filter(o => o.status !== 'cancelled');
+      return ALL_ORDERS.filter(o => {
+        if (o.status === 'cancelled') return false;
+        const d = new Date(o.order_date);
+        return d >= range;
+      });
+    }
+
+    function filterAllOrders(filter) {
+      const range = getDateRange(filter);
+      if (!range) return ALL_ORDERS;
+      return ALL_ORDERS.filter(o => {
+        const d = new Date(o.order_date);
+        return d >= range;
+      });
+    }
+
+    function updateStats(filter) {
+      const activeOrders = filterOrders(filter);
+      const allFiltered = filterAllOrders(filter);
+      const range = getDateRange(filter);
+
+      const subDeliveries = range
+        ? ALL_DELIVERIES.filter(d => new Date(d.delivered_date) >= range)
+        : ALL_DELIVERIES;
+
+      const orderRevenue = activeOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+      const subRevenue = subDeliveries.reduce((sum, d) => sum + ((d.aap_subscriptions && d.aap_subscriptions.price) || 0), 0);
+
+      document.getElementById('stat-total-orders').textContent = activeOrders.length;
+      document.getElementById('stat-pending-orders').textContent = activeOrders.filter(o => o.status === 'pending').length;
+      document.getElementById('stat-revenue').textContent = '₹' + (orderRevenue + subRevenue).toLocaleString('en-IN');
+      document.getElementById('stat-sub-deliveries').textContent = subDeliveries.length;
+    }
+
+    function renderOrdersTable(filter) {
+      const allFiltered = filterAllOrders(filter);
+      const tbody = document.getElementById('orders-tbody');
+      const emptyMsg = document.getElementById('orders-empty');
+
+      if (allFiltered.length === 0) {
+        tbody.innerHTML = '';
+        emptyMsg.style.display = 'block';
+        return;
+      }
+
+      emptyMsg.style.display = 'none';
+      tbody.innerHTML = allFiltered.slice().reverse().map(o => {
+        const items = (o.items || []).map(item => {
+          const prod = PRODUCTS_MAP[item.productId] || {};
+          return '<li>' + (prod.name_en || item.productId) + ' x' + item.quantity + ' — ₹' + (item.price * item.quantity) + '</li>';
+        }).join('');
+        const dateStr = new Date(o.order_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const addr = o.address ? '<br><small style="color:#888">' + o.address + '</small>' : '';
+        return '<tr>' +
+          '<td><strong>' + o.id.slice(0,8) + '</strong></td>' +
+          '<td>' + o.customer_name + addr + '</td>' +
+          '<td><a href="tel:' + o.phone + '" style="color:#2d5a27">' + o.phone + '</a></td>' +
+          '<td><ul class="order-items">' + items + '</ul></td>' +
+          '<td class="product-price">₹' + o.total + '</td>' +
+          '<td>' + dateStr + '</td>' +
+          '<td><span class="badge badge-' + o.status + '">' + o.status + '</span></td>' +
+          '<td class="actions"><select onchange="updateOrderStatus(\'' + o.id + '\', this.value)">' +
+            '<option value="pending"' + (o.status==='pending'?' selected':'') + '>Pending</option>' +
+            '<option value="confirmed"' + (o.status==='confirmed'?' selected':'') + '>Confirmed</option>' +
+            '<option value="delivered"' + (o.status==='delivered'?' selected':'') + '>Delivered</option>' +
+            '<option value="cancelled"' + (o.status==='cancelled'?' selected':'') + '>Cancelled</option>' +
+          '</select></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function applyFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      updateStats(filter);
+      renderOrdersTable(filter);
+    }
+
+    function exportCSV() {
+      const orders = filterAllOrders(currentFilter);
+      if (orders.length === 0) return showToast('No orders to export', 'error');
+
+      const headers = ['Order ID', 'Customer', 'Phone', 'Address', 'Items', 'Total', 'Date', 'Status'];
+      const rows = orders.map(o => {
+        const items = (o.items || []).map(item => {
+          const prod = PRODUCTS_MAP[item.productId] || {};
+          return (prod.name_en || item.productId) + ' x' + item.quantity;
+        }).join('; ');
+        const dateStr = new Date(o.order_date).toLocaleDateString('en-IN');
+        return [
+          o.id,
+          '"' + (o.customer_name || '').replace(/"/g, '""') + '"',
+          o.phone || '',
+          '"' + (o.address || '').replace(/"/g, '""') + '"',
+          '"' + items.replace(/"/g, '""') + '"',
+          o.total || 0,
+          dateStr,
+          o.status
+        ].join(',');
+      });
+
+      const csv = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'annapurna_orders_' + currentFilter + '_' + new Date().toISOString().split('T')[0] + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Exported ' + orders.length + ' orders');
+    }
+
     // TAB NAVIGATION
     function showTab(name, el) {
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
