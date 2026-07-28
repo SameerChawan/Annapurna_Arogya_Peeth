@@ -204,6 +204,9 @@ app.post('/api/order', async (req, res) => {
     const orderAgent = require('./agents/order');
     await orderAgent.draftOrderReply(order);
 
+    // Fire webhook for order notification
+    fireOrderWebhook(order, enrichedItems, allProducts);
+
     res.status(201).json({ success: true, order });
   } catch (err) {
     console.error('POST /api/order error:', err);
@@ -668,6 +671,48 @@ app.put('/api/drafts/:id', requireAuth, async (req, res) => {
 app.get('/admin/agent', requireAuth, (req, res) => {
   res.render('agent');
 });
+
+// ─── Order webhook notifier ─────────────────────────────────────────────────
+function fireOrderWebhook(order, items, allProducts) {
+  const webhookUrl = process.env.ORDER_WEBHOOK_URL;
+  if (!webhookUrl) return;
+
+  const productMap = {};
+  (allProducts || []).forEach(p => { productMap[p.id] = p; });
+
+  const itemList = (items || []).map(item => {
+    const prod = productMap[item.productId] || {};
+    return {
+      name: prod.name_en || item.productId,
+      name_mr: prod.name_mr || '',
+      quantity: item.quantity,
+      price: item.price,
+      subtotal: item.price * item.quantity,
+    };
+  });
+
+  const payload = {
+    event: 'new_order',
+    timestamp: new Date().toISOString(),
+    order_id: order.id,
+    customer: {
+      name: order.customer_name,
+      phone: order.phone,
+      address: order.address || '',
+    },
+    items: itemList,
+    total: order.total,
+    status: order.status,
+    notes: order.notes || '',
+    source: order.source || 'website',
+  };
+
+  fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(err => console.error('Order webhook failed:', err.message));
+}
 
 // ─── 404 ────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

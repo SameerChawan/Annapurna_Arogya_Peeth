@@ -146,6 +146,41 @@ async function parseMessage(rawMessage) {
     // Draft reply
     if (order) {
       await draftOrderReply(order);
+
+      // Fire webhook for order notification
+      const webhookUrl = process.env.ORDER_WEBHOOK_URL;
+      if (webhookUrl) {
+        const itemList = enrichedItems.map(item => {
+          const prod = productMap[item.productId] || {};
+          return {
+            name: prod.name_en || item.productId,
+            name_mr: '',
+            quantity: item.quantity,
+            price: item.price,
+            subtotal: item.price * item.quantity,
+          };
+        });
+
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'new_order',
+            timestamp: new Date().toISOString(),
+            order_id: order.id,
+            customer: {
+              name: order.customer_name,
+              phone: order.phone,
+              address: order.address || '',
+            },
+            items: itemList,
+            total: order.total,
+            status: order.status,
+            notes: order.notes || '',
+            source: 'whatsapp_ai',
+          }),
+        }).catch(err => console.error('Order webhook failed:', err.message));
+      }
     }
 
     return { ...result, order_created: !!order };
