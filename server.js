@@ -714,6 +714,22 @@ function fireOrderWebhook(order, items, allProducts) {
   }).catch(err => console.error('Order webhook failed:', err.message));
 }
 
+// ─── SEO routes ─────────────────────────────────────────────────────────────
+app.get('/sitemap.xml', (req, res) => {
+  res.type('application/xml');
+  res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+});
+
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send(`User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api
+
+Sitemap: https://annapurna.merasahayak-ai.in/sitemap.xml`);
+});
+
 // ─── 404 ────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).send('Page not found');
