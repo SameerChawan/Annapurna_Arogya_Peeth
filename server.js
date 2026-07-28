@@ -11,6 +11,9 @@ const supabase = require('./lib/supabase');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy (Cloudflare → Nginx → Docker)
+app.set('trust proxy', 1);
+
 // ─── Security Middleware ─────────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
