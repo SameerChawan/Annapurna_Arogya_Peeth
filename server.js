@@ -3,35 +3,110 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const session = require('express-session');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { marked } = require('marked');
 const supabase = require('./lib/supabase');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ─── Security Middleware ─────────────────────────────────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https://lh3.googleusercontent.com", "https://*.supabase.co"],
+      connectSrc: ["'self'", "https://*.supabase.co", "https://openrouter.ai"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
+
+// Rate limiting — general API
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' }
+});
+
+// Rate limiting — login (stricter)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many login attempts. Try again in 15 minutes.',
+  skipSuccessfulRequests: true,
+});
+
+// Rate limiting — order/subscribe (moderate)
+const orderLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many orders. Please try again later.' }
+});
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Make req available in all EJS templates
+app.use((req, res, next) => {
+  res.locals.req = req;
+  next();
+});
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'annapurna-arogya-peeth-secret-2026',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 }
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  }
 }));
 
-// Auth credentials from env
-const ADMIN_USER = process.env.ADMIN_USERNAME || 'NayanaChawan';
-const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'Nayana@2471';
+// Auth credentials from env (NO hardcoded fallback)
+const ADMIN_USER = process.env.ADMIN_USERNAME;
+const ADMIN_PASS = process.env.ADMIN_PASSWORD;
 
-// CORS headers for API endpoints
+if (!ADMIN_USER || !ADMIN_PASS) {
+  console.error('FATAL: ADMIN_USERNAME and ADMIN_PASSWORD must be set in environment');
+  process.exit(1);
+}
+
+if (!process.env.SESSION_SECRET) {
+  console.error('FATAL: SESSION_SECRET must be set in environment');
+  process.exit(1);
+}
+
+// CORS headers — restricted to own domain
+const ALLOWED_ORIGINS = [
+  'https://annapurna.merasahayak-ai.in',
+  'https://www.merasahayak-ai.in',
+  'http://localhost:3000'
+];
 app.use('/api', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
@@ -138,7 +213,7 @@ app.get('/business-plan', (req, res) => {
 });
 
 // ─── Customer-facing API (public) ───────────────────────────────────────────
-app.post('/api/order', async (req, res) => {
+app.post('/api/order', orderLimiter, async (req, res) => {
   try {
     const { customerName, phone, address, items, notes } = req.body;
     if (!customerName || !items || !items.length) {
@@ -214,7 +289,7 @@ app.post('/api/order', async (req, res) => {
   }
 });
 
-app.post('/api/subscribe', async (req, res) => {
+app.post('/api/subscribe', orderLimiter, async (req, res) => {
   try {
     const { customerName, phone, address, productId, quantity, frequency, notes } = req.body;
     if (!customerName || !phone || !productId) {
@@ -285,7 +360,7 @@ app.get('/admin/login', (req, res) => {
   res.render('login', { error: null });
 });
 
-app.post('/admin/login', (req, res) => {
+app.post('/admin/login', loginLimiter, (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
     req.session.isAdmin = true;
@@ -726,13 +801,21 @@ app.get('/robots.txt', (req, res) => {
 Allow: /
 Disallow: /admin
 Disallow: /api
+Disallow: /admin/login
 
+Host: annapurna.merasahayak-ai.in
 Sitemap: https://annapurna.merasahayak-ai.in/sitemap.xml`);
 });
 
 // ─── 404 ────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).send('Page not found');
+  res.status(404).json({ error: 'Not found' });
+});
+
+// ─── Global error handler ───────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 // ─── Start ──────────────────────────────────────────────────────────────────
