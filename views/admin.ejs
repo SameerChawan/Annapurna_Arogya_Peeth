@@ -908,10 +908,10 @@
       }
 
       div.innerHTML = quickItems.map((item, i) =>
-        '<div class="qo-item"><span>' + item.name + ' × ' + item.quantity + ' kg</span><span>₹' + (item.price * item.quantity).toLocaleString('en-IN') + ' <span class="remove" onclick="removeQuickItem(' + i + ')">×</span></span></div>'
+        '<div class="qo-item"><span>' + item.name + ' × ' + item.quantity + ' kg</span><span>₹' + Math.ceil(item.price * item.quantity).toLocaleString('en-IN') + ' <span class="remove" onclick="removeQuickItem(' + i + ')">×</span></span></div>'
       ).join('');
 
-      const total = quickItems.reduce((s, i) => s + i.price * i.quantity, 0);
+      const total = Math.ceil(quickItems.reduce((s, i) => s + i.price * i.quantity, 0));
       totalDiv.querySelector('span:last-child').textContent = '₹' + total.toLocaleString('en-IN');
       totalDiv.style.display = 'flex';
       submitBtn.style.display = 'block';
@@ -942,7 +942,7 @@
         });
         const data = await res.json();
         if (data.ok || data.order) {
-          const total = quickItems.reduce((s, i) => s + i.price * i.quantity, 0);
+          const total = Math.ceil(quickItems.reduce((s, i) => s + i.price * i.quantity, 0));
           showToast('Order created! Total: ₹' + total.toLocaleString('en-IN'), 'success');
           quickItems.length = 0;
           renderQuickItems();
@@ -1122,7 +1122,7 @@
         const prod = productsMap[p.productId] || {};
         return { productId: p.productId, quantity: p.quantity || 1, price: prod.price || 0 };
       });
-      const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      const total = Math.ceil(items.reduce((sum, i) => sum + i.price * i.quantity, 0));
 
       try {
         const res = await fetch('/api/order', {

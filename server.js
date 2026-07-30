@@ -236,7 +236,7 @@ app.post('/api/order', orderLimiter, async (req, res) => {
         price: product ? product.price : (item.price || 0)
       };
     });
-    const total = enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const total = Math.ceil(enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0));
 
     // Upsert customer by phone
     let customerId = null;
@@ -766,7 +766,7 @@ function fireOrderWebhook(order, items, allProducts) {
       name_mr: prod.name_mr || '',
       quantity: item.quantity,
       price: item.price,
-      subtotal: item.price * item.quantity,
+      subtotal: Math.ceil(item.price * item.quantity),
     };
   });
 
