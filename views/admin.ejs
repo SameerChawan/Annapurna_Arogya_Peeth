@@ -239,6 +239,12 @@
             <button class="filter-btn" onclick="applyFilter('mtd', this)">MTD</button>
             <button class="filter-btn" onclick="applyFilter('ytd', this)">YTD</button>
             <button class="filter-btn active" onclick="applyFilter('ltd', this)">LTD</button>
+            <span style="color:#ccc;margin:0 4px">|</span>
+            <button class="filter-btn active" onclick="applyStatusFilter('all', this)">All</button>
+            <button class="filter-btn" onclick="applyStatusFilter('pending', this)">Pending</button>
+            <button class="filter-btn" onclick="applyStatusFilter('confirmed', this)">Confirmed</button>
+            <button class="filter-btn" onclick="applyStatusFilter('delivered', this)">Delivered</button>
+            <button class="filter-btn" onclick="applyStatusFilter('cancelled', this)">Cancelled</button>
           </div>
           <button class="btn btn-success" onclick="exportCSV()">⬇ Export CSV</button>
           <button class="btn btn-primary" onclick="openPasteOrderModal()">Paste Order</button>
@@ -546,6 +552,7 @@
     const ALL_SUBSCRIPTIONS = <%- JSON.stringify(subscriptions) %>;
 
     let currentFilter = 'ltd';
+    let currentStatusFilter = 'all';
 
     function getDateRange(filter) {
       const now = new Date();
@@ -573,21 +580,21 @@
 
     function filterOrders(filter) {
       const range = getDateRange(filter);
-      if (!range) return ALL_ORDERS.filter(o => o.status !== 'cancelled');
-      return ALL_ORDERS.filter(o => {
-        if (o.status === 'cancelled') return false;
-        const d = new Date(o.order_date);
-        return d >= range;
-      });
+      let orders = range ? ALL_ORDERS.filter(o => new Date(o.order_date) >= range) : ALL_ORDERS;
+      orders = orders.filter(o => o.status !== 'cancelled');
+      if (currentStatusFilter !== 'all') {
+        orders = orders.filter(o => o.status === currentStatusFilter);
+      }
+      return orders;
     }
 
     function filterAllOrders(filter) {
       const range = getDateRange(filter);
-      if (!range) return ALL_ORDERS;
-      return ALL_ORDERS.filter(o => {
-        const d = new Date(o.order_date);
-        return d >= range;
-      });
+      let orders = range ? ALL_ORDERS.filter(o => new Date(o.order_date) >= range) : ALL_ORDERS;
+      if (currentStatusFilter !== 'all') {
+        orders = orders.filter(o => o.status === currentStatusFilter);
+      }
+      return orders;
     }
 
     function updateStats(filter) {
@@ -603,7 +610,9 @@
       const subRevenue = subDeliveries.reduce((sum, d) => sum + ((d.aap_subscriptions && d.aap_subscriptions.price) || 0), 0);
 
       document.getElementById('stat-total-orders').textContent = activeOrders.length;
-      document.getElementById('stat-pending-orders').textContent = activeOrders.filter(o => o.status === 'pending').length;
+      document.getElementById('stat-pending-orders').textContent = currentStatusFilter === 'all'
+        ? activeOrders.filter(o => o.status === 'pending').length
+        : (currentStatusFilter === 'pending' ? activeOrders.length : 0);
       document.getElementById('stat-revenue').textContent = '₹' + (orderRevenue + subRevenue).toLocaleString('en-IN');
       document.getElementById('stat-sub-deliveries').textContent = subDeliveries.length;
     }
@@ -651,6 +660,21 @@
       if (btn) btn.classList.add('active');
       updateStats(filter);
       renderOrdersTable(filter);
+    }
+
+    function applyStatusFilter(status, btn) {
+      currentStatusFilter = status;
+      // Only toggle active state for status filter buttons (after the separator)
+      const allBtns = document.querySelectorAll('.filter-btn');
+      const separator = document.querySelector('.filter-bar span');
+      let inStatusSection = false;
+      allBtns.forEach(b => {
+        if (separator && b.previousElementSibling === separator) inStatusSection = true;
+        if (inStatusSection) b.classList.remove('active');
+      });
+      if (btn) btn.classList.add('active');
+      updateStats(currentFilter);
+      renderOrdersTable(currentFilter);
     }
 
     function exportCSV() {
