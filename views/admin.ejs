@@ -28,8 +28,11 @@
     .stat-card .label { color: #888; font-size: 0.85rem; margin-top: 4px; }
 
     /* FILTER BAR */
-    .filter-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-    .filter-btn { padding: 6px 16px; border: 2px solid #e0e0e0; border-radius: 20px; background: #fff; color: #555; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif; }
+    .filters-container { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; padding: 16px 0; margin-bottom: 4px; }
+    .filter-group { display: flex; align-items: center; gap: 8px; }
+    .filter-label { font-size: 0.7rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    .filter-bar { display: flex; gap: 4px; align-items: center; }
+    .filter-btn { padding: 6px 14px; border: 2px solid #e0e0e0; border-radius: 20px; background: #fff; color: #555; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif; }
     .filter-btn:hover { border-color: #2d5a27; color: #2d5a27; }
     .filter-btn.active { background: #2d5a27; border-color: #2d5a27; color: #fff; }
 
@@ -242,26 +245,41 @@
     <div id="orders" class="panel">
       <div class="panel-header">
         <h2>Customer Orders</h2>
-          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="actions">
+          <button class="btn btn-success" onclick="exportCSV()">⬇ Export CSV</button>
+          <button class="btn btn-primary" onclick="openPasteOrderModal()">Paste Order</button>
+        </div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filters-container">
+        <div class="filter-group">
+          <span class="filter-label">Period</span>
           <div class="filter-bar">
             <button class="filter-btn" onclick="applyFilter('wtd', this)">WTD</button>
             <button class="filter-btn" onclick="applyFilter('mtd', this)">MTD</button>
             <button class="filter-btn" onclick="applyFilter('ytd', this)">YTD</button>
             <button class="filter-btn active" onclick="applyFilter('ltd', this)">LTD</button>
-            <span style="color:#ccc;margin:0 4px">|</span>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Status</span>
+          <div class="filter-bar">
             <button class="filter-btn active" onclick="applyStatusFilter('all', this)">All</button>
             <button class="filter-btn" onclick="applyStatusFilter('pending', this)">Pending</button>
             <button class="filter-btn" onclick="applyStatusFilter('confirmed', this)">Confirmed</button>
             <button class="filter-btn" onclick="applyStatusFilter('delivered', this)">Delivered</button>
             <button class="filter-btn" onclick="applyStatusFilter('cancelled', this)">Cancelled</button>
-            <span style="color:#ccc;margin:0 4px">|</span>
-            <button class="filter-btn active" onclick="applyChannelFilter('all', this)">All Channels</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Channel</span>
+          <div class="filter-bar">
+            <button class="filter-btn active" onclick="applyChannelFilter('all', this)">All</button>
             <button class="filter-btn" onclick="applyChannelFilter('direct', this)">Direct</button>
             <button class="filter-btn" onclick="applyChannelFilter('distributor', this)">Distributor</button>
             <button class="filter-btn" onclick="applyChannelFilter('website', this)">Website</button>
           </div>
-          <button class="btn btn-success" onclick="exportCSV()">⬇ Export CSV</button>
-          <button class="btn btn-primary" onclick="openPasteOrderModal()">Paste Order</button>
         </div>
       </div>
 
@@ -783,7 +801,8 @@
 
     function applyFilter(filter, btn) {
       currentFilter = filter;
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      const group = btn.closest('.filter-group');
+      group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
       updateStats(filter);
       renderOrdersTable(filter);
@@ -791,14 +810,8 @@
 
     function applyStatusFilter(status, btn) {
       currentStatusFilter = status;
-      // Only toggle active state for status filter buttons (after the separator)
-      const allBtns = document.querySelectorAll('.filter-btn');
-      const separator = document.querySelector('.filter-bar span');
-      let inStatusSection = false;
-      allBtns.forEach(b => {
-        if (separator && b.previousElementSibling === separator) inStatusSection = true;
-        if (inStatusSection) b.classList.remove('active');
-      });
+      const group = btn.closest('.filter-group');
+      group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
       updateStats(currentFilter);
       renderOrdersTable(currentFilter);
@@ -806,14 +819,8 @@
 
     function applyChannelFilter(channel, btn) {
       currentChannelFilter = channel;
-      const allBtns = document.querySelectorAll('.filter-btn');
-      let inChannelSection = false;
-      let count = 0;
-      allBtns.forEach(b => {
-        if (b.textContent.trim() === 'All Channels') inChannelSection = true;
-        if (inChannelSection) { b.classList.remove('active'); count++; }
-        if (count > 5) inChannelSection = false;
-      });
+      const group = btn.closest('.filter-group');
+      group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
       updateStats(currentFilter);
       renderOrdersTable(currentFilter);
