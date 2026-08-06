@@ -183,6 +183,14 @@
         <div class="number" id="stat-sub-deliveries"><%= deliveries.length %></div>
         <div class="label">Sub Deliveries Made</div>
       </div>
+      <div class="stat-card" onclick="document.querySelectorAll('.tab')[1].click();setTimeout(()=>applyChannelFilter('distributor',document.querySelector('[onclick*=distributor]')),100)">
+        <div class="number" id="stat-dist-orders"><%= orders.filter(o => o.channel === 'distributor').length %></div>
+        <div class="label">Distributor Orders</div>
+      </div>
+      <div class="stat-card" onclick="document.querySelectorAll('.tab')[4].click()">
+        <div class="number" id="stat-commission-owed">₹<%= orders.filter(o => o.channel === 'distributor' && o.status !== 'cancelled').reduce((sum, o) => sum + (o.commission_amount || 0), 0).toLocaleString('en-IN') %></div>
+        <div class="label">Commission Owed</div>
+      </div>
     </div>
 
     <!-- TABS -->
@@ -191,6 +199,7 @@
       <button class="tab" onclick="showTab('orders', this)">Orders</button>
       <button class="tab" onclick="showTab('subscriptions', this)">Subscriptions</button>
       <button class="tab" onclick="showTab('customers', this)">Customers</button>
+      <button class="tab" onclick="showTab('distributors', this)">Distributors</button>
     </div>
 
     <!-- PRODUCTS PANEL -->
@@ -233,7 +242,7 @@
     <div id="orders" class="panel">
       <div class="panel-header">
         <h2>Customer Orders</h2>
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           <div class="filter-bar">
             <button class="filter-btn" onclick="applyFilter('wtd', this)">WTD</button>
             <button class="filter-btn" onclick="applyFilter('mtd', this)">MTD</button>
@@ -245,6 +254,11 @@
             <button class="filter-btn" onclick="applyStatusFilter('confirmed', this)">Confirmed</button>
             <button class="filter-btn" onclick="applyStatusFilter('delivered', this)">Delivered</button>
             <button class="filter-btn" onclick="applyStatusFilter('cancelled', this)">Cancelled</button>
+            <span style="color:#ccc;margin:0 4px">|</span>
+            <button class="filter-btn active" onclick="applyChannelFilter('all', this)">All Channels</button>
+            <button class="filter-btn" onclick="applyChannelFilter('direct', this)">Direct</button>
+            <button class="filter-btn" onclick="applyChannelFilter('distributor', this)">Distributor</button>
+            <button class="filter-btn" onclick="applyChannelFilter('website', this)">Website</button>
           </div>
           <button class="btn btn-success" onclick="exportCSV()">⬇ Export CSV</button>
           <button class="btn btn-primary" onclick="openPasteOrderModal()">Paste Order</button>
@@ -256,17 +270,37 @@
         <h3>Quick Order Entry</h3>
         <div class="qo-row">
           <div class="qo-field">
+            <label>Channel</label>
+            <select id="qo_channel" onchange="toggleChannelFields()">
+              <option value="direct">Direct Retail</option>
+              <% distributors.filter(d => d.active !== false).forEach(d => { %>
+                <option value="<%= d.id %>" data-commission="<%= d.commission_pct %>" data-name="<%= d.name %>"><%= d.name %> — <%= d.commission_pct %>% comm.</option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="qo-field" id="qo_name_field">
             <label>Customer Name *</label>
             <input type="text" id="qo_name" placeholder="Full name">
           </div>
-          <div class="qo-field">
+          <div class="qo-field" id="qo_phone_field">
             <label>Phone</label>
             <input type="tel" id="qo_phone" placeholder="9876543210" pattern="[0-9]{10}">
           </div>
+        </div>
+        <div class="qo-row" id="qo_address_row">
           <div class="qo-field">
             <label>Address</label>
             <input type="text" id="qo_address" placeholder="Delivery address">
           </div>
+          <div class="qo-field" id="qo_area_field" style="display:none">
+            <label>Delivery Area</label>
+            <input type="text" id="qo_area" placeholder="e.g. Kothrud, Pune">
+          </div>
+          <div class="qo-field" id="qo_city_field" style="display:none">
+            <label>City / Pincode</label>
+            <input type="text" id="qo_city" placeholder="e.g. 411038">
+          </div>
+          <div></div>
         </div>
         <div class="qo-add-row">
           <div style="flex:1">
@@ -289,19 +323,34 @@
           <span style="font-weight:600">Total</span>
           <span>₹0</span>
         </div>
+        <div id="qo_commission" style="display:none;padding:8px 16px;background:#fff3cd;border-radius:10px;margin-top:8px;font-size:0.85rem">
+          <span style="font-weight:600">Distributor Commission (<label id="qo_comm_pct">0</label>%):</span>
+          <span id="qo_comm_amt" style="font-weight:700;color:#856404">₹0</span>
+          <span style="color:#888;margin-left:8px">← You receive <strong id="qo_net">₹0</strong></span>
+        </div>
         <button id="qo_submit" class="btn btn-primary" style="width:100%;margin-top:12px;display:none" onclick="submitQuickOrder()">Create Order</button>
       </div>
 
       <div id="orders-empty" class="empty" style="display:<%= orders.length === 0 ? 'block' : 'none' %>">No orders found for the selected period.</div>
       <% if (orders.length > 0) { %>
         <table>
-          <thead>
-            <tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Date</th><th>Status</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="orders-tbody">
+            <thead>
+              <tr><th>ID</th><th>Channel</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Commission</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="orders-tbody">
             <% orders.slice().reverse().forEach(o => { %>
               <tr>
                 <td><strong><%= o.id.slice(0,8) %></strong></td>
+                <td>
+                  <% if (o.channel === 'distributor' && o.distributor_id) { %>
+                    <span class="badge badge-confirmed" style="font-size:0.65rem"><%= (distributors.find(d => d.id === o.distributor_id) || {}).name || o.distributor_id %></span>
+                    <% if (o.delivery_area) { %><br><small style="color:#888"><%= o.delivery_area %></small><% } %>
+                  <% } else if (o.channel === 'website') { %>
+                    <span class="badge badge-pending" style="font-size:0.65rem">Website</span>
+                  <% } else { %>
+                    <span style="color:#888;font-size:0.75rem">Direct</span>
+                  <% } %>
+                </td>
                 <td><%= o.customer_name %><% if (o.address) { %><br><small style="color:#888"><%= o.address %></small><% } %></td>
                 <td><a href="tel:<%= o.phone %>" style="color:#2d5a27"><%= o.phone %></a></td>
                 <td>
@@ -312,6 +361,14 @@
                   </ul>
                 </td>
                 <td class="product-price">₹<%= o.total %></td>
+                <td>
+                  <% if (o.commission_amount && o.channel === 'distributor') { %>
+                    <span style="color:#856404;font-weight:600">₹<%= o.commission_amount %></span>
+                    <br><small style="color:#888"><%= o.commission_rate || 0 %>%</small>
+                  <% } else { %>
+                    <span style="color:#ccc">—</span>
+                  <% } %>
+                </td>
                 <td><%= new Date(o.order_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %></td>
                 <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
                 <td class="actions">
@@ -399,6 +456,41 @@
                 <td><%= c.address || '—' %></td>
                 <td><%= c.notes || '—' %></td>
                 <td><%= new Date(c.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+    <!-- DISTRIBUTORS PANEL -->
+    <div id="distributors" class="panel">
+      <div class="panel-header">
+        <h2>Distributors</h2>
+        <button class="btn btn-primary" onclick="openDistModal()">+ Add Distributor</button>
+      </div>
+      <% if (distributors.length === 0) { %>
+        <div class="empty">No distributors yet. Add your first distributor to start tracking wholesale sales.</div>
+      <% } else { %>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Phone</th><th>Company</th><th>City</th><th>Commission</th><th>Notes</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <% distributors.forEach(d => { %>
+              <tr>
+                <td><strong><%= d.name %></strong></td>
+                <td><a href="tel:<%= d.phone %>" style="color:#2d5a27"><%= d.phone || '—' %></a></td>
+                <td><%= d.company || '—' %></td>
+                <td><%= d.city || '—' %></td>
+                <td class="product-price"><%= d.commission_pct %>%</td>
+                <td><small><%= d.notes || '—' %></small></td>
+                <td><span class="badge badge-<%= d.active !== false ? 'active' : 'cancelled' %>"><%= d.active !== false ? 'Active' : 'Inactive' %></span></td>
+                <td class="actions">
+                  <button class="btn btn-sm btn-warning" onclick='editDist(<%- JSON.stringify(d) %>)'>Edit</button>
+                  <button class="btn btn-sm btn-<%= d.active !== false ? 'outline' : 'success' %>" onclick="toggleDist('<%= d.id %>', <%= d.active === false %>)"><%= d.active === false ? 'Enable' : 'Disable' %></button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteDist('<%= d.id %>', '<%= d.name %>')">Delete</button>
+                </td>
               </tr>
             <% }) %>
           </tbody>
@@ -550,9 +642,13 @@
     const ALL_DELIVERIES = <%- JSON.stringify(deliveries) %>;
     const PRODUCTS_MAP = <%- JSON.stringify(productsMap) %>;
     const ALL_SUBSCRIPTIONS = <%- JSON.stringify(subscriptions) %>;
+    const ALL_DISTRIBUTORS = <%- JSON.stringify(distributors) %>;
+    const DISTRIBUTORS_MAP = {};
+    ALL_DISTRIBUTORS.forEach(d => { DISTRIBUTORS_MAP[d.id] = d; });
 
     let currentFilter = 'ltd';
     let currentStatusFilter = 'all';
+    let currentChannelFilter = 'all';
 
     function getDateRange(filter) {
       const now = new Date();
@@ -585,6 +681,9 @@
       if (currentStatusFilter !== 'all') {
         orders = orders.filter(o => o.status === currentStatusFilter);
       }
+      if (currentChannelFilter !== 'all') {
+        orders = orders.filter(o => (o.channel || 'direct') === currentChannelFilter);
+      }
       return orders;
     }
 
@@ -593,6 +692,9 @@
       let orders = range ? ALL_ORDERS.filter(o => new Date(o.order_date) >= range) : ALL_ORDERS;
       if (currentStatusFilter !== 'all') {
         orders = orders.filter(o => o.status === currentStatusFilter);
+      }
+      if (currentChannelFilter !== 'all') {
+        orders = orders.filter(o => (o.channel || 'direct') === currentChannelFilter);
       }
       return orders;
     }
@@ -615,6 +717,12 @@
         : (currentStatusFilter === 'pending' ? activeOrders.length : 0);
       document.getElementById('stat-revenue').textContent = '₹' + (orderRevenue + subRevenue).toLocaleString('en-IN');
       document.getElementById('stat-sub-deliveries').textContent = subDeliveries.length;
+
+      // Distributor stats
+      const distOrders = activeOrders.filter(o => o.channel === 'distributor');
+      const commissionOwed = distOrders.reduce((sum, o) => sum + (o.commission_amount || 0), 0);
+      document.getElementById('stat-dist-orders').textContent = distOrders.length;
+      document.getElementById('stat-commission-owed').textContent = '₹' + commissionOwed.toLocaleString('en-IN');
     }
 
     function renderOrdersTable(filter) {
@@ -636,12 +744,31 @@
         }).join('');
         const dateStr = new Date(o.order_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
         const addr = o.address ? '<br><small style="color:#888">' + o.address + '</small>' : '';
+
+        let channelCell = '';
+        if (o.channel === 'distributor' && o.distributor_id) {
+          const dist = DISTRIBUTORS_MAP[o.distributor_id] || {};
+          channelCell = '<span class="badge badge-confirmed" style="font-size:0.65rem">' + (dist.name || o.distributor_id) + '</span>';
+          if (o.delivery_area) channelCell += '<br><small style="color:#888">' + o.delivery_area + '</small>';
+        } else if (o.channel === 'website') {
+          channelCell = '<span class="badge badge-pending" style="font-size:0.65rem">Website</span>';
+        } else {
+          channelCell = '<span style="color:#888;font-size:0.75rem">Direct</span>';
+        }
+
+        let commCell = '<span style="color:#ccc">—</span>';
+        if (o.commission_amount && o.channel === 'distributor') {
+          commCell = '<span style="color:#856404;font-weight:600">₹' + o.commission_amount + '</span><br><small style="color:#888">' + (o.commission_rate || 0) + '%</small>';
+        }
+
         return '<tr>' +
           '<td><strong>' + o.id.slice(0,8) + '</strong></td>' +
+          '<td>' + channelCell + '</td>' +
           '<td>' + o.customer_name + addr + '</td>' +
           '<td><a href="tel:' + o.phone + '" style="color:#2d5a27">' + o.phone + '</a></td>' +
           '<td><ul class="order-items">' + items + '</ul></td>' +
           '<td class="product-price">₹' + o.total + '</td>' +
+          '<td>' + commCell + '</td>' +
           '<td>' + dateStr + '</td>' +
           '<td><span class="badge badge-' + o.status + '">' + o.status + '</span></td>' +
           '<td class="actions"><select onchange="updateOrderStatus(\'' + o.id + '\', this.value)">' +
@@ -677,24 +804,44 @@
       renderOrdersTable(currentFilter);
     }
 
+    function applyChannelFilter(channel, btn) {
+      currentChannelFilter = channel;
+      const allBtns = document.querySelectorAll('.filter-btn');
+      let inChannelSection = false;
+      let count = 0;
+      allBtns.forEach(b => {
+        if (b.textContent.trim() === 'All Channels') inChannelSection = true;
+        if (inChannelSection) { b.classList.remove('active'); count++; }
+        if (count > 5) inChannelSection = false;
+      });
+      if (btn) btn.classList.add('active');
+      updateStats(currentFilter);
+      renderOrdersTable(currentFilter);
+    }
+
     function exportCSV() {
       const orders = filterAllOrders(currentFilter);
       if (orders.length === 0) return showToast('No orders to export', 'error');
 
-      const headers = ['Order ID', 'Customer', 'Phone', 'Address', 'Items', 'Total', 'Date', 'Status'];
+      const headers = ['Order ID', 'Channel', 'Distributor', 'Customer', 'Phone', 'Address', 'Items', 'Total', 'Commission Rate', 'Commission Amt', 'Date', 'Status'];
       const rows = orders.map(o => {
         const items = (o.items || []).map(item => {
           const prod = PRODUCTS_MAP[item.productId] || {};
           return (prod.name_en || item.productId) + ' x' + item.quantity;
         }).join('; ');
         const dateStr = new Date(o.order_date).toLocaleDateString('en-IN');
+        const dist = o.distributor_id ? (DISTRIBUTORS_MAP[o.distributor_id] || {}) : {};
         return [
           o.id,
+          o.channel || 'direct',
+          '"' + (dist.name || '').replace(/"/g, '""') + '"',
           '"' + (o.customer_name || '').replace(/"/g, '""') + '"',
           o.phone || '',
           '"' + (o.address || '').replace(/"/g, '""') + '"',
           '"' + items.replace(/"/g, '""') + '"',
           o.total || 0,
+          (o.commission_rate || 0) + '%',
+          o.commission_amount || 0,
           dateStr,
           o.status
         ].join(',');
@@ -889,6 +1036,110 @@
       }
     }
 
+    // CHANNEL TOGGLE
+    function toggleChannelFields() {
+      const sel = document.getElementById('qo_channel');
+      const isDist = sel.value !== 'direct';
+      document.getElementById('qo_name_field').querySelector('label').textContent = isDist ? 'Customer Name (optional)' : 'Customer Name *';
+      document.getElementById('qo_area_field').style.display = isDist ? '' : 'none';
+      document.getElementById('qo_city_field').style.display = isDist ? '' : 'none';
+      renderQuickItems();
+    }
+
+    // DISTRIBUTOR MODAL
+    function openDistModal(dist) {
+      const m = document.getElementById('distModal');
+      const title = document.getElementById('distModalTitle');
+      const submit = document.getElementById('df_submit');
+
+      if (dist) {
+        title.textContent = 'Edit Distributor';
+        submit.textContent = 'Save Changes';
+        document.getElementById('df_id').value = dist.id;
+        document.getElementById('df_name').value = dist.name || '';
+        document.getElementById('df_phone').value = dist.phone || '';
+        document.getElementById('df_company').value = dist.company || '';
+        document.getElementById('df_city').value = dist.city || '';
+        document.getElementById('df_address').value = dist.address || '';
+        document.getElementById('df_commission').value = dist.commission_pct || 15;
+        document.getElementById('df_notes').value = dist.notes || '';
+      } else {
+        title.textContent = 'Add Distributor';
+        submit.textContent = 'Add Distributor';
+        document.getElementById('distForm').reset();
+        document.getElementById('df_id').value = '';
+        document.getElementById('df_commission').value = '15';
+      }
+      m.classList.add('show');
+    }
+
+    function closeDistModal() {
+      document.getElementById('distModal').classList.remove('show');
+    }
+
+    function editDist(dist) {
+      openDistModal(dist);
+    }
+
+    async function saveDist(e) {
+      e.preventDefault();
+      const id = document.getElementById('df_id').value;
+      const data = {
+        name: document.getElementById('df_name').value,
+        phone: document.getElementById('df_phone').value,
+        company: document.getElementById('df_company').value,
+        city: document.getElementById('df_city').value,
+        address: document.getElementById('df_address').value,
+        commission_pct: parseFloat(document.getElementById('df_commission').value),
+        notes: document.getElementById('df_notes').value,
+        active: true
+      };
+
+      try {
+        const url = id ? '/api/distributors/' + id : '/api/distributors';
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) {
+          showToast(id ? 'Distributor updated!' : 'Distributor added!');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Error saving distributor', 'error');
+        }
+      } catch (err) {
+        showToast('Network error', 'error');
+      }
+    }
+
+    async function toggleDist(id, currentlyInactive) {
+      await fetch('/api/distributors/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: currentlyInactive })
+      });
+      showToast(currentlyInactive ? 'Distributor enabled' : 'Distributor disabled');
+      setTimeout(() => location.reload(), 800);
+    }
+
+    async function deleteDist(id, name) {
+      if (!confirm('Delete distributor "' + name + '"? This cannot be undone.')) return;
+      try {
+        const res = await fetch('/api/distributors/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('Distributor deleted');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showToast('Error deleting distributor', 'error');
+        }
+      } catch (err) {
+        showToast('Network error', 'error');
+      }
+    }
+
     // QUICK ORDER ENTRY
     const quickItems = [];
 
@@ -923,10 +1174,12 @@
       const div = document.getElementById('qo_items');
       const totalDiv = document.getElementById('qo_total');
       const submitBtn = document.getElementById('qo_submit');
+      const commDiv = document.getElementById('qo_commission');
 
       if (quickItems.length === 0) {
         div.innerHTML = '';
         totalDiv.style.display = 'none';
+        commDiv.style.display = 'none';
         submitBtn.style.display = 'none';
         return;
       }
@@ -939,40 +1192,73 @@
       totalDiv.querySelector('span:last-child').textContent = '₹' + total.toLocaleString('en-IN');
       totalDiv.style.display = 'flex';
       submitBtn.style.display = 'block';
+
+      // Commission breakdown
+      const channelSel = document.getElementById('qo_channel');
+      const opt = channelSel.options[channelSel.selectedIndex];
+      if (channelSel.value !== 'direct') {
+        const pct = parseFloat(opt.dataset.commission || 0);
+        const commAmt = Math.round(total * pct / 100);
+        const net = total - commAmt;
+        document.getElementById('qo_comm_pct').textContent = pct;
+        document.getElementById('qo_comm_amt').textContent = '₹' + commAmt.toLocaleString('en-IN');
+        document.getElementById('qo_net').textContent = '₹' + net.toLocaleString('en-IN');
+        commDiv.style.display = 'block';
+      } else {
+        commDiv.style.display = 'none';
+      }
     }
 
     async function submitQuickOrder() {
+      const channelSel = document.getElementById('qo_channel');
+      const isDistOrder = channelSel.value !== 'direct';
       const name = document.getElementById('qo_name').value.trim();
       const phone = document.getElementById('qo_phone').value.trim();
       const address = document.getElementById('qo_address').value.trim();
+      const area = document.getElementById('qo_area') ? document.getElementById('qo_area').value.trim() : '';
+      const city = document.getElementById('qo_city') ? document.getElementById('qo_city').value.trim() : '';
 
-      if (!name) return showToast('Customer name is required', 'error');
+      if (!isDistOrder && !name) return showToast('Customer name is required for direct orders', 'error');
       if (quickItems.length === 0) return showToast('Add at least one product', 'error');
 
       const btn = document.getElementById('qo_submit');
       btn.disabled = true;
       btn.textContent = 'Creating...';
 
+      const body = {
+        customerName: name,
+        phone: phone || '',
+        address: address,
+        items: quickItems.map(i => ({ productId: i.productId, quantity: i.quantity })),
+      };
+
+      if (isDistOrder) {
+        body.distributorId = channelSel.value;
+        body.channel = 'distributor';
+        body.deliveryArea = area;
+        body.city = city;
+      }
+
       try {
         const res = await fetch('/api/order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            customerName: name,
-            phone: phone || '',
-            address: address,
-            items: quickItems.map(i => ({ productId: i.productId, quantity: i.quantity }))
-          })
+          body: JSON.stringify(body)
         });
         const data = await res.json();
         if (data.ok || data.order) {
           const total = Math.ceil(quickItems.reduce((s, i) => s + i.price * i.quantity, 0));
-          showToast('Order created! Total: ₹' + total.toLocaleString('en-IN'), 'success');
+          const distName = isDistOrder ? channelSel.options[channelSel.selectedIndex].dataset.name : '';
+          showToast('Order created' + (isDistOrder ? ' for ' + distName : '') + '! Total: ₹' + total.toLocaleString('en-IN'), 'success');
           quickItems.length = 0;
           renderQuickItems();
           document.getElementById('qo_name').value = '';
           document.getElementById('qo_phone').value = '';
           document.getElementById('qo_address').value = '';
+          if (document.getElementById('qo_area')) document.getElementById('qo_area').value = '';
+          if (document.getElementById('qo_city')) document.getElementById('qo_city').value = '';
+          document.getElementById('qo_channel').selectedIndex = 0;
+          toggleChannelFields();
           setTimeout(() => location.reload(), 1000);
         } else {
           showToast(data.error || 'Error creating order', 'error');
@@ -1055,7 +1341,7 @@
 
     // ESC key closes modal
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { closeProductModal(); closePasteOrderModal(); }
+      if (e.key === 'Escape') { closeProductModal(); closePasteOrderModal(); closeDistModal(); }
     });
 
     // PASTE ORDER MODAL
@@ -1132,13 +1418,21 @@
       }
     }
 
+    function togglePasteChannel() {
+      const sel = document.getElementById('po_channel');
+      const isDist = sel.value !== 'direct';
+      document.getElementById('po_name_wrap').querySelector('label').textContent = isDist ? 'Customer Name (optional)' : 'Customer Name *';
+    }
+
     async function submitParsedOrder() {
       const parsed = JSON.parse(document.getElementById('pasteOrderModal').dataset.parsed || '{}');
       const name = document.getElementById('po_name').value.trim();
       const phone = document.getElementById('po_phone').value.trim();
       const notes = document.getElementById('po_notes').value.trim();
+      const channelSel = document.getElementById('po_channel');
+      const isDistOrder = channelSel.value !== 'direct';
 
-      if (!name) return showToast('Customer name is required', 'error');
+      if (!isDistOrder && !name) return showToast('Customer name is required for direct orders', 'error');
       if (!parsed.products || parsed.products.length === 0) return showToast('No products detected', 'error');
 
       // Build items with prices
@@ -1148,17 +1442,24 @@
       });
       const total = Math.ceil(items.reduce((sum, i) => sum + i.price * i.quantity, 0));
 
+      const body = {
+        customerName: name,
+        phone: phone,
+        address: '',
+        items: items,
+        notes: notes
+      };
+
+      if (isDistOrder) {
+        body.distributorId = channelSel.value;
+        body.channel = 'distributor';
+      }
+
       try {
         const res = await fetch('/api/order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            customerName: name,
-            phone: phone,
-            address: '',
-            items: items,
-            notes: notes
-          })
+          body: JSON.stringify(body)
         });
         const data = await res.json();
         if (data.ok || data.order) {
@@ -1190,6 +1491,15 @@
           <h4 style="margin-bottom:12px;color:#2d5a27">Parsed Order</h4>
           <div style="display:grid;gap:12px;margin-bottom:16px">
             <div>
+              <label style="font-weight:600;font-size:0.8rem;color:#555">Channel</label>
+              <select id="po_channel" onchange="togglePasteChannel()" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-family:Poppins,sans-serif">
+                <option value="direct">Direct Retail</option>
+                <% distributors.filter(d => d.active !== false).forEach(d => { %>
+                  <option value="<%= d.id %>" data-commission="<%= d.commission_pct %>" data-name="<%= d.name %>"><%= d.name %> — <%= d.commission_pct %>% comm.</option>
+                <% }) %>
+              </select>
+            </div>
+            <div id="po_name_wrap">
               <label style="font-weight:600;font-size:0.8rem;color:#555">Customer Name *</label>
               <input type="text" id="po_name" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-family:Poppins,sans-serif" placeholder="Customer name">
             </div>
@@ -1214,6 +1524,55 @@
           <button class="btn btn-primary" style="width:100%" onclick="submitParsedOrder()">Create Order</button>
         </div>
       </div>
+    </div>
+  </div>
+  <!-- DISTRIBUTOR MODAL -->
+  <div id="distModal" class="modal-overlay" onclick="if(event.target===this)closeDistModal()">
+    <div class="modal" style="max-width:550px">
+      <div class="modal-header">
+        <h3 id="distModalTitle">Add Distributor</h3>
+        <button class="modal-close" onclick="closeDistModal()">&times;</button>
+      </div>
+      <form id="distForm" onsubmit="saveDist(event)">
+        <div class="modal-body">
+          <input type="hidden" id="df_id" value="">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Name *</label>
+              <input type="text" id="df_name" required placeholder="e.g. Raj Stores">
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="df_phone" placeholder="9876543210">
+            </div>
+            <div class="form-group">
+              <label>Company</label>
+              <input type="text" id="df_company" placeholder="Business name">
+            </div>
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="df_city" placeholder="e.g. Pune">
+            </div>
+            <div class="form-group">
+              <label>Address</label>
+              <input type="text" id="df_address" placeholder="Full address">
+            </div>
+            <div class="form-group">
+              <label>Commission % *</label>
+              <input type="number" id="df_commission" min="0" max="100" step="0.5" value="15" required>
+              <small style="color:#888;font-size:0.75rem">% of order total they keep as their margin</small>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="df_notes" rows="2" placeholder="Payment terms, preferred products, etc."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeDistModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="df_submit">Add Distributor</button>
+        </div>
+      </form>
     </div>
   </div>
 </body>

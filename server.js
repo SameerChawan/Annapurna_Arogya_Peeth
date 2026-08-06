@@ -219,9 +219,26 @@ app.get('/business-plan', (req, res) => {
 // ─── Customer-facing API (public) ───────────────────────────────────────────
 app.post('/api/order', orderLimiter, async (req, res) => {
   try {
-    const { customerName, phone, address, items, notes } = req.body;
-    if (!customerName || !items || !items.length) {
-      return res.status(400).json({ error: 'customerName and items are required' });
+    const { customerName, phone, address, items, notes, distributorId, deliveryArea, city, channel } = req.body;
+    if (!items || !items.length) {
+      return res.status(400).json({ error: 'items are required' });
+    }
+
+    const isDistributorOrder = !!distributorId;
+    const effectiveChannel = channel || (isDistributorOrder ? 'distributor' : 'direct');
+
+    // Fetch distributor if applicable
+    let distributor = null;
+    let commissionRate = 0;
+    if (isDistributorOrder) {
+      const { data: dist } = await supabase
+        .from('aap_distributors')
+        .select('*')
+        .eq('id', distributorId)
+        .single();
+      if (!dist) return res.status(400).json({ error: 'Distributor not found' });
+      distributor = dist;
+      commissionRate = dist.commission_pct || 0;
     }
 
     const allProducts = await getProducts();
@@ -238,42 +255,59 @@ app.post('/api/order', orderLimiter, async (req, res) => {
     });
     const total = Math.ceil(enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0));
 
-    // Upsert customer by phone
-    let customerId = null;
-    const { data: existing } = await supabase
-      .from('aap_customers')
-      .select('id')
-      .eq('phone', phone)
-      .single();
+    // Calculate commission if distributor order
+    const commissionAmount = isDistributorOrder ? Math.round(total * commissionRate / 100) : 0;
 
-    if (existing) {
-      customerId = existing.id;
-      await supabase
+    // Upsert customer by phone (only for direct/non-distributor orders with phone)
+    let customerId = null;
+    if (phone && !isDistributorOrder) {
+      const { data: existing } = await supabase
         .from('aap_customers')
-        .update({ name: customerName, address: address || '', updated_at: new Date().toISOString() })
-        .eq('id', customerId);
-    } else {
-      const { data: newCustomer } = await supabase
-        .from('aap_customers')
-        .insert({ name: customerName, phone, address: address || '' })
         .select('id')
+        .eq('phone', phone)
         .single();
-      if (newCustomer) customerId = newCustomer.id;
+
+      if (existing) {
+        customerId = existing.id;
+        await supabase
+          .from('aap_customers')
+          .update({ name: customerName, address: address || '', updated_at: new Date().toISOString() })
+          .eq('id', customerId);
+      } else {
+        const { data: newCustomer } = await supabase
+          .from('aap_customers')
+          .insert({ name: customerName, phone, address: address || '' })
+          .select('id')
+          .single();
+        if (newCustomer) customerId = newCustomer.id;
+      }
     }
 
     // Insert order
+    const orderData = {
+      customer_id: customerId,
+      customer_name: customerName || (distributor ? distributor.name : ''),
+      phone: phone || '',
+      address: address || '',
+      items: enrichedItems,
+      total,
+      status: 'pending',
+      notes: notes || '',
+    };
+
+    // Add distributor fields if applicable
+    if (isDistributorOrder) {
+      orderData.distributor_id = distributorId;
+      orderData.channel = effectiveChannel;
+      orderData.commission_rate = commissionRate;
+      orderData.commission_amount = commissionAmount;
+      orderData.delivery_area = deliveryArea || '';
+      orderData.city = city || '';
+    }
+
     const { data: order, error } = await supabase
       .from('aap_orders')
-      .insert({
-        customer_id: customerId,
-        customer_name: customerName,
-        phone,
-        address: address || '',
-        items: enrichedItems,
-        total,
-        status: 'pending',
-        notes: notes || '',
-      })
+      .insert(orderData)
       .select()
       .single();
 
@@ -404,12 +438,19 @@ app.get('/admin', requireAuth, async (req, res) => {
     .select('*, aap_subscriptions(price, product_id)')
     .order('delivered_date', { ascending: false });
 
+  // Fetch distributors
+  const { data: distributors } = await supabase
+    .from('aap_distributors')
+    .select('*')
+    .order('name', { ascending: true });
+
   res.render('admin', {
     products: products,
     orders: orders || [],
     subscriptions: subscriptions || [],
     customers: customers || [],
-    deliveries: deliveries || []
+    deliveries: deliveries || [],
+    distributors: distributors || [],
   });
 });
 
@@ -614,6 +655,75 @@ app.get('/api/customers', requireAuth, async (req, res) => {
   res.json(data);
 });
 
+// ─── Protected API: Distributors ────────────────────────────────────────────
+app.get('/api/distributors', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('aap_distributors')
+    .select('*')
+    .order('name', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+app.post('/api/distributors', requireAuth, async (req, res) => {
+  try {
+    const dist = {
+      id: req.body.id || generateId('DIST'),
+      name: req.body.name,
+      phone: req.body.phone || '',
+      company: req.body.company || '',
+      address: req.body.address || '',
+      city: req.body.city || '',
+      commission_pct: parseFloat(req.body.commission_pct) || 15,
+      notes: req.body.notes || '',
+      active: req.body.active !== undefined ? req.body.active : true,
+    };
+    if (!dist.name) return res.status(400).json({ error: 'name is required' });
+    const { data, error } = await supabase
+      .from('aap_distributors')
+      .insert(dist)
+      .select()
+      .single();
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (err) {
+    console.error('POST /api/distributors error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/distributors/:id', requireAuth, async (req, res) => {
+  try {
+    const updates = { ...req.body, id: undefined, updated_at: new Date().toISOString() };
+    const { data, error } = await supabase
+      .from('aap_distributors')
+      .update(updates)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Distributor not found' });
+    res.json(data);
+  } catch (err) {
+    console.error('PUT /api/distributors error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/distributors/:id', requireAuth, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('aap_distributors')
+      .delete()
+      .eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('DELETE /api/distributors error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ─── Agent API: Marketing ───────────────────────────────────────────────────
 app.post('/api/agents/marketing/generate', requireAuth, async (req, res) => {
   try {
@@ -784,6 +894,11 @@ function fireOrderWebhook(order, items, allProducts) {
     status: order.status,
     notes: order.notes || '',
     source: order.source || 'website',
+    channel: order.channel || 'direct',
+    distributor_id: order.distributor_id || null,
+    commission_rate: order.commission_rate || 0,
+    commission_amount: order.commission_amount || 0,
+    delivery_area: order.delivery_area || '',
   };
 
   fetch(webhookUrl, {
